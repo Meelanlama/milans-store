@@ -5,7 +5,9 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,6 +29,11 @@ public class Category extends BaseDates {
 
     @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
     private Boolean isActive;
+
+    //One category has many products
+    // Load products only when accessed, and cascade changes (save/delete) from category to products
+    @OneToMany(mappedBy = "category",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    private List<Product> products = new ArrayList<>();
 
 }
 

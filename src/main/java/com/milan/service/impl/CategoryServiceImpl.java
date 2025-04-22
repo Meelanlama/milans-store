@@ -112,8 +112,14 @@ public class CategoryServiceImpl implements CategoryService {
         //get categories that are active and not soft deleted
         Page<Category> categories = categoryRepo.findAllActiveCategories(pageRequest);
 
+        if(categories.isEmpty()){
+            throw new ResourceNotFoundException("No categories found");
+        }
+
         //convert pageable category entity to dto class
         PageableResponse<CategoryDto> categoryResponse = PageMapper.getPageableResponse(categories,CategoryDto.class);
+
+        logger.info("Found all categories {}", categoryResponse.getTotalElements());
 
         return categoryResponse;
 

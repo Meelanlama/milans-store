@@ -71,7 +71,7 @@ public class CategoryController {
     }
 
     @GetMapping("/image/{categoryId}")
-    public void serveCategoryImage(@PathVariable Integer categoryId, HttpServletResponse response) throws IOException {
+    public void displayCategoryImage(@PathVariable Integer categoryId, HttpServletResponse response) throws IOException {
 
         // 1. Get category from DB
         CategoryDto categoryDto = categoryService.getCategoryById(categoryId);
