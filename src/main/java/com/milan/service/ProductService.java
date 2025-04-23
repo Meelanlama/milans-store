@@ -21,4 +21,6 @@ public interface ProductService {
 
     PageableResponse<ProductDto> getProductsBySearching(String keyword,int pageNo, int pageSize, String sortBy, String sortDir);
 
+    PageableResponse<ProductDto> getAllProductsByCategory(String categoryId, int pageNumber, int pageSize, String sortBy, String sortDir);
+
 }

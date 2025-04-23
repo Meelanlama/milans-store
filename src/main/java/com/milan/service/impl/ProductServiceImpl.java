@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -34,7 +35,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepo;
 
     private final CategoryRepository categoryRepo;
-
 
     @Override
     public Boolean createProducts(ProductDto productDto) {
@@ -100,7 +100,7 @@ public class ProductServiceImpl implements ProductService {
         //ternary operator for checking sortDir value
         Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
 
-        PageRequest pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
         //get products that are active and not soft deleted
         Page<Product> allProducts = productRepo.findAllActiveProducts(pageRequest);
@@ -122,7 +122,7 @@ public class ProductServiceImpl implements ProductService {
 
         Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
 
-        PageRequest pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
         Page<Product> inactiveProducts = productRepo.findByIsActiveFalse(pageRequest);
 
@@ -157,7 +157,7 @@ public class ProductServiceImpl implements ProductService {
 
         Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
 
-        PageRequest pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
         //get products that are active only and match the keyword in product names or description
         Page<Product> searchedProducts = productRepo.searchNotes(pageRequest,keyword);
@@ -172,5 +172,25 @@ public class ProductServiceImpl implements ProductService {
         logger.info("Found searched products {}", productDtoPageableResponse.getTotalElements());
 
         return productDtoPageableResponse;
+    }
+
+    @Override
+    public PageableResponse<ProductDto> getAllProductsByCategory(String categoryId, int pageNumber, int pageSize, String sortBy, String sortDir) {
+
+        //find category by id first
+        Category category = categoryRepo.findById(Integer.parseInt(categoryId)).orElseThrow(() -> new ResourceNotFoundException("Invalid category id"));
+
+        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+
+        Pageable pageRequest = PageRequest.of(pageNumber, pageSize, sort);
+
+        Page<Product> productsByCategory = productRepo.findByCategoryAndIsActiveTrue(category, pageRequest);
+
+        if(productsByCategory.isEmpty()){
+            throw new ResourceNotFoundException("No products found");
+        }
+
+       return PageMapper.getPageableResponse(productsByCategory,ProductDto.class);
+
     }
 }

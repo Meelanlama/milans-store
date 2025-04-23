@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -107,7 +108,7 @@ public class CategoryServiceImpl implements CategoryService {
         //ternary operator for checking sortDir value
         Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
 
-        PageRequest pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
         //get categories that are active and not soft deleted
         Page<Category> categories = categoryRepo.findAllActiveCategories(pageRequest);

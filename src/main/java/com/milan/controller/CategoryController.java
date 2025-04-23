@@ -1,10 +1,12 @@
 package com.milan.controller;
 
 import com.milan.dto.CategoryDto;
+import com.milan.dto.ProductDto;
 import com.milan.dto.response.ImageResponse;
 import com.milan.dto.response.PageableResponse;
 import com.milan.service.CategoryService;
 import com.milan.service.ImageService;
+import com.milan.service.ProductService;
 import com.milan.util.CommonUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,8 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     private final ImageService imageService;
+
+    private final ProductService productService;
 
     @Value("${image.category}")
     private String categoryImagePath;
@@ -126,5 +130,17 @@ public class CategoryController {
         return CommonUtil.createBuildResponse(categoryResponse, HttpStatus.OK);
     }
 
+    //this method is useful: when you want to get all products of that specific category only in pageable format in frontend
+    @GetMapping("/{categoryId}/productsByCategory")
+    public ResponseEntity<?> getProductsByCategoryId(@PathVariable String categoryId,
+                                                     @RequestParam(value = "pageNo", defaultValue = DEFAULT_PAGE_NO, required = false) int pageNo,
+                                                     @RequestParam(value = "pageSize", defaultValue = DEFAULT_PAGE_SIZE, required = false) int pageSize,
+                                                     @RequestParam(value = "sortBy", defaultValue = "productName", required = false) String sortBy,
+                                                     @RequestParam(value = "sortDir", defaultValue = "asc", required = false) String sortDir) {
+
+        PageableResponse<ProductDto> response = productService.getAllProductsByCategory(categoryId, pageNo, pageSize, sortBy, sortDir);
+
+        return CommonUtil.createBuildResponse(response, HttpStatus.OK);
+    }
 
 }
