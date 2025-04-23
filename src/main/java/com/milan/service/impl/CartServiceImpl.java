@@ -10,19 +10,15 @@ import com.milan.model.SiteUser;
 import com.milan.repository.CartItemRepository;
 import com.milan.repository.CartRepository;
 import com.milan.repository.ProductRepository;
-import com.milan.repository.UserRepository;
 import com.milan.service.CartService;
+import com.milan.util.CheckValidation;
 import com.milan.util.CommonUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.nio.file.AccessDeniedException;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,14 +30,17 @@ public class CartServiceImpl implements CartService {
 
     private final ProductRepository productRepo;
 
-    private final UserRepository userRepo;
-
     private final ModelMapper mapper;
+
+    private final CheckValidation checkValidation;
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CartServiceImpl.class);
 
     @Override
     public CartDto addItemsToCarts(AddCartItems items) {
+
+        //Validation check
+        checkValidation.validateAddToCartRequest(items);
 
         int productId = items.getProductId();
         int quantity = items.getQuantity();

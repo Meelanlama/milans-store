@@ -11,6 +11,7 @@ import com.milan.repository.CategoryRepository;
 import com.milan.repository.ProductRepository;
 import com.milan.service.ImageService;
 import com.milan.service.ProductService;
+import com.milan.util.CheckValidation;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -36,8 +37,14 @@ public class ProductServiceImpl implements ProductService {
 
     private final CategoryRepository categoryRepo;
 
+    private final CheckValidation checkValidation;
+
     @Override
     public Boolean createProducts(ProductDto productDto) {
+
+        //Validation check
+        checkValidation.productValidation(productDto);
+
         //convert productDto to product entity
         Product product = mapper.map(productDto, Product.class);
 
