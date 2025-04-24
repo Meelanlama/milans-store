@@ -33,4 +33,9 @@ public class OrderDto {
     private LocalDateTime estimatedDeliveryDate;
 
     private List<OrderItemDto> items;
+
+    //Added this to show details of user in order.
+    //helps in showing order history of user while exporting in excel.
+    private UserDto user;
+
 }

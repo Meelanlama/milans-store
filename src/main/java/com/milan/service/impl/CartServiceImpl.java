@@ -137,22 +137,32 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void clearCart() {
+
         SiteUser user = CommonUtil.getLoggedInUser();
 
         Cart cart = cartRepo.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for this user"));
 
-        // Remove all items in that cart
+        // Only Remove all items in that cart of the user
         cart.getCartItems().clear();
+
+        // Set total CartPrice to 0 if the cart is empty
+        if (cart.getCartItems().isEmpty()) {
+            cart.setTotalCartPrice(0.0) ;
+        }
+
+        // persist empty cart
         cartRepo.save(cart);
 
         // If no items remain, delete the cart and it's details related to the items
-        if (cart.getCartItems().isEmpty()) {
-            cartRepo.delete(cart);
-        }
+        //deleting the entire cart when it's empty is not the preferred approach
+        //Cart is tied to the user: user can keep adding items later without needing to re-create a cart.
+
+//        if (cart.getCartItems().isEmpty()) {
+//            cartRepo.delete(cart);
+//        }
 
     }
-
 
     @Override
     public CartDto getCartByUser() {

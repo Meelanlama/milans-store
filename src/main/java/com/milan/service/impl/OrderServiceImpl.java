@@ -16,7 +16,12 @@ import com.milan.util.CommonUtil;
 import com.milan.util.OrderStatus;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,12 +30,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
@@ -134,17 +138,23 @@ public class OrderServiceImpl implements OrderService {
 
         //Clear the cart after successful order creation
         cart.getCartItems().clear();
-        this.cartRepository.save(cart);
+
+        // Set total CartPrice to 0 as cart items is cleared.
+        if (cart.getCartItems().isEmpty()) {
+            cart.setTotalCartPrice(0.0) ;
+        }
+
+        cartRepository.save(cart);
 
         //Save the order
         Order savedOrder = orderRepo.save(order);
 
-        //Mark products as out-of-stock if quantity becomes 0
+        //Mark products as out of stock if quantity becomes 0
         for (OrderItem orderItem : orderItems) {
             Product product = orderItem.getProduct();
             if (product.getStock() == 0) {
                 product.setStock(0);
-                this.productRepository.save(product);
+                productRepository.save(product);
             }
         }
 
@@ -182,21 +192,34 @@ public class OrderServiceImpl implements OrderService {
         return orders;
     }
 
+    @Override
+    public PageableResponse<OrderDto> getAllOrders(int pageNo, int pageSize, String sortBy, String sortDir) {
+
+        //ternary operator for checking sortDir value
+        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Order> page = this.orderRepo.findAll(pageable);
+
+        return PageMapper.getPageableResponse(page, OrderDto.class);
+    }
+
 
     //send code of status enum
+    // Order Creation Email
     public void sendMailForOrderStatus(OrderDto order,SiteUser user) throws MessagingException, UnsupportedEncodingException {
         try {
             StringBuilder productTable = new StringBuilder();
             for (OrderItemDto item : order.getItems()) {
                 productTable.append("<tr>")
-                        .append("<td>").append(item.getProductId()).append("</td>")
+                        .append("<td>").append(item.getProduct().getProductName()).append("</td>")
                         .append("<td>").append(item.getQuantity()).append("</td>")
                         .append("<td>").append(item.getPriceAtPurchase()).append("</td>")
                         .append("</tr>");
             }
 
             String msg = "<html><body style='font-family: Arial, sans-serif; font-size: 14px;'>"
-                    + "<p>Hello [[name]],</p>"
+                    + "<p>Hello, [[name]],</p>"
                     + "<p>Your order status is: <b>[[orderStatus]]</b>.</p>"
                     + "<p>Estimated Delivery Date: <b>[[deliveryDate]]</b></p>"
                     + "<hr>"
@@ -230,7 +253,7 @@ public class OrderServiceImpl implements OrderService {
             EmailRequest emailRequest = EmailRequest.builder()
                     .to(user.getEmail())
                     .title("Order Update")
-                    .subject("Your Order Status Has Been Updated")
+                    .subject("Your Order Details For Your New Order")
                     .message(msg)
                     .build();
 
@@ -242,5 +265,192 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    @Override
+    public OrderDto updateOrderStatus(Integer orderId, String statusStr) throws MessagingException, UnsupportedEncodingException {
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderId));
+
+        // Get the logged-in user
+        SiteUser user = CommonUtil.getLoggedInUser();
+
+        //get the enum
+        OrderStatus status;
+        try {
+            status = OrderStatus.valueOf(statusStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid status: " + statusStr);
+        }
+
+        order.setStatus(status);
+        Order saved = orderRepo.save(order);
+        logger.info("Order status updated successfully: {}", saved);
+
+        OrderDto orderDto = mapper.map(saved, OrderDto.class);
+
+        sendMailForUpdate(orderDto,user);
+
+        return orderDto;
+    }
+
+    @Override
+    public OrderDto searchOrderByIdentifier(String orderIdentifier) {
+
+        String trimOrderIdentifier = orderIdentifier.trim();
+
+        // Search for the order by unique identifier
+        Order orderById = orderRepo.findByOrderIdentifier(trimOrderIdentifier)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with identifier: " + orderIdentifier));
+
+        return mapper.map(orderById, OrderDto.class);
+    }
+
+    @Override
+    public PageableResponse<OrderDto> filterOrders(int pageNo, int pageSize, String sortBy, String sortDir, String status, String startDate, String endDate) {
+
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        // Convert String date to LocalDateTime
+        //yyyy-MM-ddTHH:mm:ss -> Time is added manually here
+        LocalDateTime  start = null;
+        LocalDateTime  end = null;
+
+        if (startDate != null && !startDate.isEmpty()) {
+            start = LocalDateTime.parse(startDate.trim() + "T00:00:00");  // Parsing the string to LocalDateTime and adding time part here
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            end = LocalDateTime.parse(endDate.trim() + "T23:59:59");
+        }
+
+        OrderStatus orderStatus = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                orderStatus = OrderStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid order status: " + status);
+            }
+        }
+
+        // Debugging info: log the values before executing the query
+        logger.info("Filtering Orders: status={}, startDate={}, endDate={}", orderStatus, start, end);
+
+        // Filter based on the status and date range
+        Page<Order> page = orderRepo.findAllWithFilters(orderStatus, start, end, pageable);
+
+        return PageMapper.getPageableResponse(page, OrderDto.class);
+    }
+
+    // Order Status Update Email
+    public void sendMailForUpdate(OrderDto orderDto,SiteUser user) throws MessagingException, UnsupportedEncodingException {
+        try {
+
+            String msg = "<html><body style='font-family: Arial, sans-serif; font-size: 14px;'>"
+                    + "<p>Hello, [[name]],</p>"
+                    + "<p>Your order status for your previous order is: <b>[[orderStatus]]</b>.</p>"
+                    + "<p>Estimated Delivery Date: <b>[[deliveryDate]]</b></p>"
+                    + "<hr>"
+                    + "<p><b>Order Details:</b></p>"
+                    + "<p><b>Order ID:</b> [[orderId]]<br>"
+                    + "<b>Order Date:</b> [[orderDate]]<br>"
+                    + "<b>Total Amount:</b> $" + orderDto.getTotalOrderAmount() + "</p>"
+                    + "</body></html>";
+
+            msg = msg.replace("[[name]]", user.getFirstName() + " " + user.getLastName());
+            msg = msg.replace("[[orderStatus]]", orderDto.getStatus().name());
+            msg = msg.replace("[[deliveryDate]]", orderDto.getEstimatedDeliveryDate().toLocalDate().toString());
+            msg = msg.replace("[[orderId]]", orderDto.getOrderIdentifier());
+            msg = msg.replace("[[orderDate]]", orderDto.getOrderDate().toLocalDate().toString());
+
+            EmailRequest emailRequest = EmailRequest.builder()
+                    .to(user.getEmail())
+                    .title("Order Status Update")
+                    .subject("Your Order Status")
+                    .message(msg)
+                    .build();
+
+            // Send the email using the email service
+            emailService.sendEmail(emailRequest);
+
+        } catch (Exception e) {
+            logger.error("Error sending email for order status: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    //export excel file for all orders in a given month
+    public void exportOrdersForMonth(String status, String startDate, String endDate, HttpServletResponse response) throws IOException {
+
+        // Fetch orders using the filter method from above
+        PageableResponse<OrderDto> orders = filterOrders(0, 15, "orderDate", "desc", status, startDate, endDate);
+
+        // Create a new workbook and sheet
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Orders");
+
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        headerRow.createCell(0).setCellValue("Order Identifier");
+        headerRow.createCell(1).setCellValue("Status");
+        headerRow.createCell(2).setCellValue("Order Date");
+        headerRow.createCell(3).setCellValue("Total Order Amount");
+        headerRow.createCell(4).setCellValue("Ordered Items");
+        headerRow.createCell(5).setCellValue("Quantity");
+        headerRow.createCell(6).setCellValue("Shipping Address");
+        headerRow.createCell(7).setCellValue("Estimated Delivery Date");
+        headerRow.createCell(8).setCellValue("Payment Method");
+        headerRow.createCell(9).setCellValue("User Email");
+        //more columns as needed
+
+
+        // Adding rows with order data
+        int rowNum = 1;
+        for (OrderDto order : orders.getContent()) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(order.getOrderIdentifier());
+            row.createCell(1).setCellValue(order.getStatus().getLabel());
+            row.createCell(2).setCellValue(order.getOrderDate().toString());
+            row.createCell(3).setCellValue(order.getTotalOrderAmount().toString());
+
+            // Iterate through each order in the page content for OrderItem DTO
+            StringBuilder itemsString = new StringBuilder();
+            // Initialize itemsString for each order to reset it for the next order
+            itemsString.setLength(0);
+            int totalQuantity = 0;
+
+            // Iterate over each order's items of OrderItemDto to set in the excel sheet
+            // Collect product names and quantities
+            for (OrderItemDto item : order.getItems()) {
+                if (item.getProduct() != null) {
+                    itemsString.append(item.getProduct().getProductName()).append(", ");
+                }
+                totalQuantity += item.getQuantity();
+            }
+
+                // Remove the trailing comma and space if necessary
+                if (itemsString.length() > 0) {
+                    itemsString.setLength(itemsString.length() - 2);  // Remove the last comma and space in excel in products name
+                }
+
+                row.createCell(4).setCellValue(itemsString.toString());
+                row.createCell(5).setCellValue(totalQuantity);
+                row.createCell(6).setCellValue(order.getShippingAddress());
+                row.createCell(7).setCellValue(order.getEstimatedDeliveryDate().toString());
+                row.createCell(8).setCellValue(order.getPaymentMethod());
+            if (order.getUser() != null) {
+                row.createCell(9).setCellValue(order.getUser().getEmail());
+            }
+        }
+
+        // Set response headers for downloading the Excel file
+        String fileName = "our_orders_from" + startDate + "_to_" + endDate + ".xlsx";
+        // Set the content type for Excel file
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        // Set the header for file download
+        response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+
+        // Write the workbook to the response output stream
+        workbook.write(response.getOutputStream());
+        workbook.close();
+    }
 
 }

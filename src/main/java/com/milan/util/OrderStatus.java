@@ -2,8 +2,8 @@ package com.milan.util;
 
 public enum OrderStatus {
     IN_PROGRESS(1, "Order In Progress"),
-    ORDER_RECEIVED(2, "Order Received"),
-    ORDER_SHIPPED(3, "Order Shipped"),
+    RECEIVED(2, "Order Received"),
+    SHIPPED(3, "Order Shipped"),
     OUT_FOR_DELIVERY(4, "Trying to deliver your order today"),
     DELIVERED(5, "Delivery Successful"),
     CANCELLED(6, "Order Cancelled");
