@@ -55,7 +55,6 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserDetailsService userDetailsService;
 
-
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     @Override
