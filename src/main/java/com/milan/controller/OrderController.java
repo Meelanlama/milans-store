@@ -3,9 +3,13 @@ package com.milan.controller;
 import com.milan.dto.CreateOrderRequestDto;
 import com.milan.dto.OrderDto;
 import com.milan.dto.response.PageableResponse;
+import com.milan.model.Order;
+import com.milan.model.Refund;
 import com.milan.service.OrderService;
+import com.milan.service.RefundService;
 import com.milan.util.CommonUtil;
 import com.milan.util.OrderStatus;
+import com.milan.util.RefundStatus;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -40,6 +45,8 @@ import static com.milan.util.MyConstants.*;
 public class OrderController {
 
     private final OrderService orderService;
+
+    private final RefundService refundService;
 
     // create order for logged in user according to their cart items
     @PostMapping("/create")
@@ -181,6 +188,16 @@ public class OrderController {
     public void downloadInvoice(@PathVariable String orderIdentifier, HttpServletResponse response) throws IOException {
 
         orderService.generateInvoice(orderIdentifier, response);
+    }
+
+    //CANCEL ORDER IF IT'S IN PROGRESS OR ORDER RECEIVED BY SELLER
+    @PostMapping("/cancel-order/{orderIdentifier}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> cancelOrder(@PathVariable String orderIdentifier) throws AccessDeniedException {
+
+        orderService.requestOrderCancellation(orderIdentifier);
+
+        return CommonUtil.createBuildResponseMessage("Order cancelled successfully", HttpStatus.OK);
     }
 
 }

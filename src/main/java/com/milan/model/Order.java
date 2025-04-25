@@ -4,7 +4,6 @@ import com.milan.util.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;;
@@ -58,6 +57,10 @@ public class Order extends BaseDates{
     // Items in the order
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
+
+    // 1:1 Relationship with Refund entity
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private Refund refund;
 
 }
 

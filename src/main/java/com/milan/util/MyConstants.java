@@ -18,4 +18,6 @@ public class MyConstants {
     public static final int FIRST_NAME_MAX_LENGTH = 50;
     public static final int LAST_NAME_MAX_LENGTH = 50;
     public static final int PASSWORD_MIN_LENGTH = 8;
+
+    public static final int REFUND_WINDOW_DAYS = 7;
 }

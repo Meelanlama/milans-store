@@ -577,4 +577,30 @@ public class OrderServiceImpl implements OrderService {
         document.close();
     }
 
+    @Override
+    public void requestOrderCancellation(String orderIdentifier) throws AccessDeniedException {
+
+        SiteUser currentUser = CommonUtil.getLoggedInUser();
+
+        Order order = orderRepo.findByOrderIdentifier(orderIdentifier)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderIdentifier));
+
+        //if that order doesnt belong to user
+        if (!order.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("Unauthorized access to cancel order");
+        }
+
+        //get status from enum
+        OrderStatus status = order.getStatus();
+
+        //cancel order only if it's received or in progress status
+        if (status != OrderStatus.RECEIVED && status != OrderStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Cannot cancel right now: " + status);
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepo.save(order);
+
+    }
+
 }

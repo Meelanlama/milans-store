@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -30,4 +31,7 @@ public interface OrderService {
     void exportOrdersForMonth(String status, String startDate, String endDate, HttpServletResponse response) throws IOException;
 
     public void generateInvoice(String orderIdentifier, HttpServletResponse response) throws IOException;
+
+    void requestOrderCancellation(String orderIdentifier) throws AccessDeniedException;
+
 }
