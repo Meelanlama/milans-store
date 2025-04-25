@@ -13,7 +13,7 @@ public class OrderItemDto {
 
     private int quantity;
 
-    //show total price of item according to quantity
+    // Stores the unit price at the time of purchase
     private Double priceAtPurchase;
 
 //    private Integer productId;

@@ -29,4 +29,5 @@ public interface OrderService {
 
     void exportOrdersForMonth(String status, String startDate, String endDate, HttpServletResponse response) throws IOException;
 
+    public void generateInvoice(String orderIdentifier, HttpServletResponse response) throws IOException;
 }

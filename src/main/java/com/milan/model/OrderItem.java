@@ -29,6 +29,7 @@ public class OrderItem {
     @Column(nullable = false)
     private int quantity;
 
+    // Stores the unit price at the time of purchase
     @Column(nullable = false)
     private Double priceAtPurchase;
 

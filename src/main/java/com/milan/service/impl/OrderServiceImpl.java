@@ -1,5 +1,14 @@
 package com.milan.service.impl;
 
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.LineSeparator;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
 import com.milan.dto.CreateOrderRequestDto;
 import com.milan.dto.OrderDto;
 import com.milan.dto.OrderItemDto;
@@ -32,10 +41,13 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.itextpdf.kernel.pdf.PdfName.Font;
 
 @Service
 @RequiredArgsConstructor
@@ -113,6 +125,7 @@ public class OrderServiceImpl implements OrderService {
             OrderItem orderItem = OrderItem.builder()
                     .quantity(orderProductQuantity)
                     .product(product)
+                    // while storing in db only we store total price according to product quantity.
                     .priceAtPurchase(orderProductQuantity * itemPrice)
                     .order(order)
                     .build();
@@ -352,7 +365,7 @@ public class OrderServiceImpl implements OrderService {
                     + "<p><b>Order Details:</b></p>"
                     + "<p><b>Order ID:</b> [[orderId]]<br>"
                     + "<b>Order Date:</b> [[orderDate]]<br>"
-                    + "<b>Total Amount:</b> $" + orderDto.getTotalOrderAmount() + "</p>"
+                    + "<b>Total Amount:</b> Rs." + orderDto.getTotalOrderAmount() + "</p>"
                     + "</body></html>";
 
             msg = msg.replace("[[name]]", user.getFirstName() + " " + user.getLastName());
@@ -451,6 +464,117 @@ public class OrderServiceImpl implements OrderService {
         // Write the workbook to the response output stream
         workbook.write(response.getOutputStream());
         workbook.close();
+    }
+
+    //GENERATE PDF INVOICE
+    @Override
+    public void generateInvoice(String orderIdentifier, HttpServletResponse response) throws IOException {
+
+        //get current logged in user and its details including order
+        SiteUser currentUser = CommonUtil.getLoggedInUser();
+
+        //find the order by unique identifier
+        Order order = orderRepo.findByOrderIdentifier(orderIdentifier)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderIdentifier));
+
+        logger.info("Generating invoice for order {}", orderIdentifier);
+
+        //if that order doesnt belong to user
+        if (!order.getUser().getId().equals(currentUser.getId())) {
+            logger.warn("User {} tried to access order {}", currentUser.getEmail(), orderIdentifier);
+            throw new AccessDeniedException("Unauthorized access to invoice");
+        }
+
+        // Converting Order to OrderDto using ModelMapper, so we dont expose entity directly
+        OrderDto orderDto = mapper.map(order, OrderDto.class);
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "attachment; filename = Order_Invoice_Of_" + currentUser.getFirstName() + currentUser.getLastName() + ".pdf");
+
+        PdfWriter writer = new PdfWriter(response.getOutputStream());
+        PdfDocument pdfDoc = new PdfDocument(writer);
+        Document document = new Document(pdfDoc);
+
+        //Header
+        document.add(new Paragraph( "MILAN's STORE")
+                .setFontSize(20)
+                .setBold()
+                .setTextAlignment(TextAlignment.CENTER));
+
+        document.add(new Paragraph("Gokarneshowr-2, Kathmandu, Nepal")
+                .setTextAlignment(TextAlignment.CENTER));
+        document.add(new LineSeparator(new SolidLine()));
+        document.add(new Paragraph(" "));
+
+        //Title
+        Paragraph title = new Paragraph("Order Invoice")
+                .setFontSize(22)
+                .setBold()
+                .setTextAlignment(TextAlignment.CENTER);
+        document.add(title);
+
+
+        //Customer and Order Details from the OrderDto instead of entity
+        document.add(new Paragraph("Order ID: " + orderDto.getOrderIdentifier()));
+        document.add(new Paragraph("Order Date: " + orderDto.getOrderDate().toLocalDate()));
+        document.add(new Paragraph("Full Name: " + currentUser.getFirstName() + " " + currentUser.getLastName()));
+        document.add(new Paragraph("Estimated Delivery Date: " + orderDto.getEstimatedDeliveryDate()));
+        document.add(new Paragraph("Payment Method: " + orderDto.getPaymentMethod()));
+        document.add(new Paragraph("Phone Number: " + orderDto.getShippingPhoneNumber()));
+
+        document.add(new Paragraph(" "));
+        document.add(new Paragraph("Shipping Address:").setBold().setFontSize(18));
+        document.add(new Paragraph(orderDto.getShippingAddress()));
+        document.add(new Paragraph("Province: " + orderDto.getShippingProvince()));
+        document.add(new Paragraph("ZIP Code: " + orderDto.getShippingZipCode()));
+
+        document.add(new Paragraph(" "));
+        document.add(new LineSeparator(new SolidLine()));
+
+        // Ordered Items Table
+        Table table = new Table(UnitValue.createPercentArray(new float[]{4, 2, 2, 2}));
+        table.setWidth(UnitValue.createPercentValue(100));
+        table.addHeaderCell("Product Name");
+        table.addHeaderCell("Quantity");
+        table.addHeaderCell("Price");
+        table.addHeaderCell("Total");
+
+        double total = 0.0;
+        // Iterating over items in the OrderItemDto instead of entity OrderItems
+        for (OrderItemDto itemDto : orderDto.getItems()) {
+            String productName = itemDto.getProduct().getProductName();
+            int quantity = itemDto.getQuantity();
+            double unitPrice = itemDto.getPriceAtPurchase();
+
+            //set total price for each item
+            double itemTotal = quantity * unitPrice;
+            total += itemTotal;
+
+            table.addCell(productName);
+            table.addCell(String.valueOf(quantity));
+            table.addCell(String.format("Rs. %.2f", unitPrice));
+            table.addCell(String.format("Rs. %.2f", itemTotal));
+        }
+        document.add(table);
+
+        //Total summary
+        document.add(new Paragraph(" "));
+        document.add(new Paragraph("Total Order Amount: Rs. " + orderDto.getTotalOrderAmount())
+                .setTextAlignment(TextAlignment.RIGHT)
+                .setBold());
+
+
+        //Footer
+        document.add(new Paragraph(" "));
+        document.add(new Paragraph("For any queries, Contact us: support@milanstore.com")
+                .setFontSize(14)
+                .setTextAlignment(TextAlignment.CENTER));
+        document.add(new Paragraph("This is a system generated invoice.").setFontSize(9).setTextAlignment(TextAlignment.CENTER)
+                .setFontSize(12));
+
+        logger.info("Invoice generated for order {}", orderIdentifier);
+
+        document.close();
     }
 
 }

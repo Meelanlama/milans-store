@@ -153,7 +153,7 @@ public class OrderController {
     }
 
     //Export excel file
-    @GetMapping("/export")
+    @GetMapping("/export-excel")
     @PreAuthorize(ROLE_ADMIN)
     public void exportOrders(
             @RequestParam(value = "status", required = false) String status,
@@ -173,5 +173,14 @@ public class OrderController {
         orderService.exportOrdersForMonth(status, startDate, endDate, response);
     }
 
+    // Download the invoice PDF for a specific order.
+    // Only accessible by the owner of the order.
+    // In the frontend, loop through user orders to get each orderIdentifier and use it to trigger this download.
+    @GetMapping("/download-invoice/{orderIdentifier}")
+    @PreAuthorize(ROLE_USER)
+    public void downloadInvoice(@PathVariable String orderIdentifier, HttpServletResponse response) throws IOException {
+
+        orderService.generateInvoice(orderIdentifier, response);
+    }
 
 }
