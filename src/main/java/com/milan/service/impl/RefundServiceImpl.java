@@ -161,9 +161,9 @@ public class RefundServiceImpl implements RefundService {
 
         Page<Refund> page = refundRepo.findAll(pageable);
 
-        if(page.isEmpty()){
-            throw new RuntimeException("No refund requests found");
-        }
+//        if(page.isEmpty()){
+//            throw new RuntimeException("No refund requests found");
+//        }
 
         logger.info("Refund requests found: {}", page.getContent().size());
 

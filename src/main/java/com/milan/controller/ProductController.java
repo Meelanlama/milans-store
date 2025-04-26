@@ -107,7 +107,7 @@ public class ProductController {
             @RequestParam(value = "pageNo", defaultValue = DEFAULT_PAGE_NO) int pageNo,
             @RequestParam(value = "pageSize", defaultValue = DEFAULT_PAGE_SIZE) int pageSize,
             @RequestParam(value = "sortBy", defaultValue = "productName") String sortBy,
-            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir, Sort sort) {
+            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
 
 
         //get all products in pageable formats
@@ -123,7 +123,7 @@ public class ProductController {
             @RequestParam(value = "pageNo", defaultValue = DEFAULT_PAGE_NO) int pageNo,
             @RequestParam(value = "pageSize", defaultValue = DEFAULT_PAGE_SIZE) int pageSize,
             @RequestParam(value = "sortBy", defaultValue = "productName") String sortBy,
-            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir, Sort sort) {
+            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
 
 
         PageableResponse<ProductDto> allInactiveProducts = productService.getInactiveProducts(pageNo, pageSize, sortBy, sortDir);

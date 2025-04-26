@@ -50,6 +50,9 @@ public class Product extends BaseDates{
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
     //helps in updating product using builder pattern
     public Product updateFromDto(ProductDto dto) {
         return this.toBuilder()

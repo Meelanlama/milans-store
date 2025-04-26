@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -63,5 +64,9 @@ public class SiteUser extends BaseDates{
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "account_status_id")
     private AccountStatus accountStatus;
+
+    //One user can write multiple reviews.Each review belongs to only one user.
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
 }

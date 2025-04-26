@@ -42,4 +42,9 @@ public class ProductDto {
 
     private LocalDateTime updatedOn;
 
+    private Double averageRating;
+
+    private Long totalReviews;
+
+
 }

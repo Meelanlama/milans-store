@@ -193,9 +193,9 @@ public class OrderServiceImpl implements OrderService {
 
         Page<Order> userOrder = orderRepo.findByUserId(user.getId(), pageRequest);
 
-        if(userOrder.isEmpty()){
-            throw new ResourceNotFoundException("No orders found for this user");
-        }
+//        if(userOrder.isEmpty()){
+//            throw new ResourceNotFoundException("No orders found for this user");
+//        }
 
         //convert pageable order entity to dto class
         PageableResponse<OrderDto> orders = PageMapper.getPageableResponse(userOrder,OrderDto.class);

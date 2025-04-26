@@ -39,6 +39,9 @@ public class ProductServiceImpl implements ProductService {
 
     private final CheckValidation checkValidation;
 
+    private final ReviewServiceImpl reviewService;
+
+
     @Override
     public Boolean createProducts(ProductDto productDto) {
 
@@ -70,14 +73,26 @@ public class ProductServiceImpl implements ProductService {
         return !ObjectUtils.isEmpty(saveProduct);
     }
 
+    //helper method to add total reviews and avg rating in product dto
+    private void addRatingsAndReviewInDto(ProductDto productDto) {
+        Double avgRating = reviewService.getAverageRating(productDto.getId());
+        Long totalReviews = reviewService.getTotalReviews(productDto.getId());
+        productDto.setAverageRating(avgRating);
+        productDto.setTotalReviews(totalReviews);
+    }
+
     @Override
     public ProductDto getProductById(Integer productId) {
         Product foundProduct = productRepo.findById(productId).orElseThrow(() -> new IllegalArgumentException("Invalid product id"));
         logger.info("Product found by id: {}", foundProduct);
 
         //convert product entity to productDto
-        return mapper.map(foundProduct, ProductDto.class);
+        ProductDto productDto =  mapper.map(foundProduct, ProductDto.class);
 
+        //set total reviews and ratings in product dto itself by helper method
+        addRatingsAndReviewInDto(productDto);
+
+        return productDto;
     }
 
     @Override
@@ -112,12 +127,16 @@ public class ProductServiceImpl implements ProductService {
         //get products that are active and not soft deleted
         Page<Product> allProducts = productRepo.findAllActiveProducts(pageRequest);
 
-        if(allProducts.isEmpty()){
-            throw new ResourceNotFoundException("No products found");
-        }
+//        if(allProducts.isEmpty()){
+//            throw new ResourceNotFoundException("No products found");
+//        }
 
         //convert pageable product entity to dto class
         PageableResponse<ProductDto> productDtoPageableResponse = PageMapper.getPageableResponse(allProducts,ProductDto.class);
+
+        // Set total reviews and ratings in product dto for each product
+        //The frontend will now receive the full ProductDto with the additional fields for averageRating and totalReviews.
+        productDtoPageableResponse.getContent().forEach(this::addRatingsAndReviewInDto);
 
         logger.info("Found all products {}", productDtoPageableResponse.getTotalElements());
 
@@ -133,9 +152,9 @@ public class ProductServiceImpl implements ProductService {
 
         Page<Product> inactiveProducts = productRepo.findByIsActiveFalse(pageRequest);
 
-        if(inactiveProducts.isEmpty()){
-            throw new ResourceNotFoundException("No products found");
-        }
+//        if(inactiveProducts.isEmpty()){
+//            throw new ResourceNotFoundException("No products found");
+//        }
 
         PageableResponse<ProductDto> productDtoPageableResponse = PageMapper.getPageableResponse(inactiveProducts,ProductDto.class);
 
@@ -176,6 +195,8 @@ public class ProductServiceImpl implements ProductService {
         //convert pageable product entity to dto class
         PageableResponse<ProductDto> productDtoPageableResponse = PageMapper.getPageableResponse(searchedProducts,ProductDto.class);
 
+        productDtoPageableResponse.getContent().forEach(this::addRatingsAndReviewInDto);
+
         logger.info("Found searched products {}", productDtoPageableResponse.getTotalElements());
 
         return productDtoPageableResponse;
@@ -193,11 +214,17 @@ public class ProductServiceImpl implements ProductService {
 
         Page<Product> productsByCategory = productRepo.findByCategoryAndIsActiveTrue(category, pageRequest);
 
-        if(productsByCategory.isEmpty()){
-            throw new ResourceNotFoundException("No products found");
-        }
+//        if(productsByCategory.isEmpty()){
+//            throw new ResourceNotFoundException("No products found in this category");
+//        }
 
-       return PageMapper.getPageableResponse(productsByCategory,ProductDto.class);
+        PageableResponse<ProductDto> productDtoPageableResponse = PageMapper.getPageableResponse(productsByCategory,ProductDto.class);
+
+        productDtoPageableResponse.getContent().forEach(this::addRatingsAndReviewInDto);
+
+        logger.info("Found all products in this category {}", productDtoPageableResponse.getTotalElements());
+
+        return productDtoPageableResponse;
 
     }
 }
