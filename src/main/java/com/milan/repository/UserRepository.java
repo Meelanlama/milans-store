@@ -23,4 +23,12 @@ public interface UserRepository extends JpaRepository<SiteUser, Integer> {
             "WHERE (:firstName IS NULL OR LOWER(u.firstName) LIKE LOWER (CONCAT('%', :firstName, '%')))")
     Page<SiteUser> searchUsers(String firstName, Pageable pageable);
 
+    /**
+     * Finds a SiteUser based on the password reset token stored in their associated AccountStatus.
+     *
+     * @param token The password reset token.
+     * @return An Optional containing the SiteUser if found, or empty if not.
+     */
+    Optional<SiteUser> findByAccountStatusPasswordResetToken(String token);
+
 }

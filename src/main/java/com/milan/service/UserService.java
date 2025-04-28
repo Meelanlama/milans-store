@@ -5,6 +5,7 @@ import com.milan.dto.UpdateProfileDto;
 import com.milan.dto.UserDto;
 import com.milan.dto.UserProfileResponseDto;
 import com.milan.dto.response.PageableResponse;
+import com.milan.model.SiteUser;
 
 public interface UserService {
 
@@ -25,4 +26,7 @@ public interface UserService {
     PageableResponse<UserProfileResponseDto> searchUsers(String firstName,int pageNo, int pageSize, String sortBy, String sortDir);
 
     void changePassword(ChangePasswordRequestDto request);
+
+    SiteUser getUserByEmail(String email);
+
 }

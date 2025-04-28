@@ -1,11 +1,13 @@
 package com.milan.service.impl;
 
+import com.milan.dto.ResetPasswordDto;
 import com.milan.dto.RoleDto;
 import com.milan.dto.UserDto;
 import com.milan.dto.request.EmailRequest;
 import com.milan.dto.request.LoginRequest;
 import com.milan.dto.response.LoginResponse;
 import com.milan.dto.response.UserResponse;
+import com.milan.exception.ResourceNotFoundException;
 import com.milan.model.AccountStatus;
 import com.milan.model.Role;
 import com.milan.model.SiteUser;
@@ -14,7 +16,11 @@ import com.milan.repository.UserRepository;
 import com.milan.security.CustomUserDetails;
 import com.milan.security.JwtService;
 import com.milan.service.AuthService;
+import com.milan.service.UserService;
 import com.milan.util.CheckValidation;
+import com.milan.util.CommonUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -54,6 +60,8 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
 
     private final UserDetailsService userDetailsService;
+
+    private final UserService userService;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
@@ -213,5 +221,99 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(newRefreshToken)
                 .build();
     }
+
+    @Override
+    public void processForgotPassword(String email, HttpServletRequest request) {
+
+        SiteUser userByEmail = userService.getUserByEmail(email);
+
+        //generate random token
+        String passwordResetToken = UUID.randomUUID().toString();
+
+        //SET password reset token in account status
+        AccountStatus accountStatus = AccountStatus.builder()
+                .isAccountActive(true)
+                .passwordResetToken(passwordResetToken)
+                .build();
+
+        userByEmail.setAccountStatus(accountStatus);
+
+        // Save the updated user
+        userRepo.save(userByEmail);
+
+        //get the base url to modify if dynamically: right now: localhost:8080/
+        String baseUrl = CommonUtil.getUrl(request);
+
+        try {
+            //send email with the url(api) and token
+            sendResetPasswordEmail(userByEmail, baseUrl);
+        } catch (Exception e) {
+            logger.error("Failed to send password reset email", e);
+            throw new RuntimeException("Failed to send reset password email");
+        }
+        logger.info("Password reset email sent successfully for email={}", email);
+    }
+
+    @Override
+    public void resetPassword(String token, ResetPasswordDto resetPasswordDto) {
+
+        // Retrieve the user associated with the given reset token.
+        SiteUser user = userRepo.findByAccountStatusPasswordResetToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired token"));
+
+        // Validate that new password and confirm password match for reset password
+        if (!resetPasswordDto.getNewPassword().equals(resetPasswordDto.getConfirmNewPassword())) {
+            throw new ValidationException("Passwords do not match");
+        }
+
+        // Encode the new password
+        String encodedPassword = passwordEncoder.encode(resetPasswordDto.getNewPassword());
+        user.setPassword(encodedPassword);
+
+        // Clear the reset token after successful password change for that user
+        user.getAccountStatus().setPasswordResetToken(null);
+
+        // Save the updated user
+        userRepo.save(user);
+
+        logger.info("Password reset successfully for userId={}", user.getId());
+
+    }
+
+    private void sendResetPasswordEmail(SiteUser user, String url) throws Exception {
+
+        // Properly encode the reset token
+        String resetToken = URLEncoder.encode(user.getAccountStatus().getPasswordResetToken(), StandardCharsets.UTF_8.toString());
+
+        //call that reset password api with the help of our base url
+        String resetPasswordUrl = url + "/store/v1/auth/reset-password?token=" + resetToken;
+
+        try {
+            String emailMessage = "Hello, <b>[[username]]</b><br>"
+                    + "<br> You have requested to reset your password.<br>"
+                    + "<br> Please Click the link below to reset your password:<br>"
+                    + "<a href ='[[url]]'>Reset Password</a> <br><br>"
+                    + "If you did not request this, Please ignore this email.<br><br>"
+                    + "Thanks,<br>Milan's Online Store Team";
+
+            emailMessage = emailMessage.replace("[[username]]", user.getFirstName());
+            emailMessage = emailMessage.replace("[[url]]", resetPasswordUrl);
+
+            EmailRequest emailRequest = EmailRequest.builder()
+                    .to(user.getEmail())
+                    .title("Password Reset Request")
+                    .subject("Reset Your Password")
+                    .message(emailMessage)
+                    .build();
+
+            logger.info("Sending password reset email to: {}", user.getEmail());
+            emailService.sendEmail(emailRequest);
+
+        } catch (Exception e) {
+            logger.error("Failed to send password reset email for user {}: {}", user.getEmail(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
 
 }

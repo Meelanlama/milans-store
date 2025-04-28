@@ -30,7 +30,8 @@ public class CommonUtil {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         // Check if user is authenticated
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal() instanceof String principal && "anonymousUser".equals(principal)) {
             throw new UsernameNotFoundException("User not authenticated");
         }
 
@@ -44,10 +45,13 @@ public class CommonUtil {
     }
 
     //for generating dynamic url for sending in email
+    // Utility method to generate base URL from the incoming request
+    // Example: If request is http://localhost:8080/api/v1/auth, it will return http://localhost:8080
+
     public static String getUrl(HttpServletRequest request) {
         String apiUrl = request.getRequestURL().toString(); // http:localhost:8080/api/v1/auth
-        apiUrl = apiUrl.replace(request.getServletPath(),""); // http:localhost:8080
-        return apiUrl;
+        apiUrl = apiUrl.replace(request.getServletPath(),""); // http:localhost:8080 and Remove servlet path (e.g., /api/v1/auth)
+        return apiUrl; // Return only base URL
     }
 
     public static ResponseEntity<?> createBuildResponse(Object data,HttpStatus status){
@@ -91,6 +95,5 @@ public class CommonUtil {
                 .build();
         return response.create();
     }
-
 
 }
