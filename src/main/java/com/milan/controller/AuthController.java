@@ -89,7 +89,21 @@ public class AuthController {
 
     }
 
-    //we'll get the token from email and reset new passwprd
+    // GET endpoint to validate a password reset token
+    // This endpoint is called when a user clicks on a reset link in their email
+    @GetMapping("/reset-password")
+    public ResponseEntity<?> validateResetToken(@RequestParam String token) {
+        logger.info("Validating reset password token={}", token);
+
+        // Call service to validate the token
+        authService.validateResetPasswordToken(token);
+
+        // If valid, show the form (or respond that it's ready for password reset)
+        return CommonUtil.createBuildResponseMessage("Token is valid, Please reset your password", HttpStatus.OK);
+    }
+
+    // POST request to handle resetting the password
+    // The token is received as a query parameter and the new password is provided in the request body
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam String token, @Valid @RequestBody ResetPasswordDto resetPasswordDto) {
 

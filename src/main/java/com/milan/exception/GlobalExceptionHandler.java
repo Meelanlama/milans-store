@@ -2,6 +2,7 @@ package com.milan.exception;
 
 import com.milan.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.openxml4j.exceptions.InvalidOperationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -83,5 +84,9 @@ public class GlobalExceptionHandler {
         return CommonUtil.createErrorResponse(e.getMessage(), HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(InvalidOperationException.class)
+    public ResponseEntity<?> handleInvalidOperationException(InvalidOperationException e) {
+        return CommonUtil.createErrorResponse(e.getMessage(), HttpStatus.NOT_ACCEPTABLE);
+    }
 
 }

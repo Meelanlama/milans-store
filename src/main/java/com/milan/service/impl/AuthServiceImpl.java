@@ -22,6 +22,7 @@ import com.milan.util.CommonUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.openxml4j.exceptions.InvalidOperationException;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -78,9 +80,11 @@ public class AuthServiceImpl implements AuthService {
         setRole(userDto,saveUser);
 
         //Set account status false and generate token As, they need to verify their email address
+        //Create new account status for the new user as they don't have it yet
         AccountStatus status = AccountStatus.builder()
                 .isAccountActive(false)
                 .verificationToken(UUID.randomUUID().toString())
+                .verificationTokenExpiry(LocalDateTime.now().plusHours(24)) // Set expiry of token to 24 hours from now
                 .build();
 
         saveUser.setAccountStatus(status);
@@ -121,6 +125,7 @@ public class AuthServiceImpl implements AuthService {
     private void emailSend(SiteUser savedUser, String url) throws Exception {
 
         // Build the verification URL with proper query parameter formatting and URL encoding
+        //Account verification done is verification service
         String verificationToken = URLEncoder.encode(savedUser.getAccountStatus().getVerificationToken(), StandardCharsets.UTF_8.toString());
         String verificationUrl = url + "/store/v1/account-verify/verify-register?userId=" + savedUser.getId() + "&verificationToken=" + verificationToken;
 
@@ -227,18 +232,29 @@ public class AuthServiceImpl implements AuthService {
 
         SiteUser userByEmail = userService.getUserByEmail(email);
 
-        //generate random token
-        String passwordResetToken = UUID.randomUUID().toString();
-
         //SET password reset token in account status
-        AccountStatus accountStatus = AccountStatus.builder()
-                .isAccountActive(true)
-                .passwordResetToken(passwordResetToken)
-                .build();
+        //Don't create a new account status for the user as use the one linked to it.
+        //if directly created without checking null it will always create new account status for the account
+        // Get the existing AccountStatus, or create a new one if it doesn't exist
+        AccountStatus accountStatus = userByEmail.getAccountStatus();
 
+        // If the AccountStatus is null, then only create a new one (only if required)
+        if (accountStatus == null) {
+            accountStatus = new AccountStatus();
+            accountStatus.setIsAccountActive(false);
+        }
+
+        // Generate a reset token and update the password reset token field
+        String passwordResetToken = UUID.randomUUID().toString();
+        accountStatus.setPasswordResetToken(passwordResetToken);
+
+        // Set expiry time for the password reset token
+        accountStatus.setPasswordResetTokenExpiry(LocalDateTime.now().plusMinutes(30)); // 30 minutes expiry
+
+        // Update the account status of the user
         userByEmail.setAccountStatus(accountStatus);
 
-        // Save the updated user
+        // Save the user with the updated account status (this will not change the account_status_id as we're using the linked to it)
         userRepo.save(userByEmail);
 
         //get the base url to modify if dynamically: right now: localhost:8080/
@@ -252,6 +268,33 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Failed to send reset password email");
         }
         logger.info("Password reset email sent successfully for email={}", email);
+    }
+
+    @Override
+    public boolean validateResetPasswordToken(String token) {
+
+        // Find the user by the password reset token
+        SiteUser user = userRepo.findByAccountStatusPasswordResetToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid password reset token"));
+
+        // Check if the account is active
+        if (!user.getAccountStatus().getIsAccountActive()) {
+            throw new InvalidOperationException("Account is not active.");
+        }
+
+        //check if token is null
+        if (user.getAccountStatus().getPasswordResetToken() == null) {
+            throw new InvalidOperationException("You have already used this token to reset password. Please request a new one again.");
+        }
+
+        // Check if token time has expired. if user try to access token after more than 30 min. invalidate it
+        LocalDateTime tokenExpiry = user.getAccountStatus().getPasswordResetTokenExpiry();
+        if (tokenExpiry != null && LocalDateTime.now().isAfter(tokenExpiry)) {
+            throw new InvalidOperationException("Password reset token has expired. Please request a new one.");
+        }
+
+        return true;  // Return true if the token is valid
+
     }
 
     @Override
@@ -272,8 +315,9 @@ public class AuthServiceImpl implements AuthService {
 
         // Clear the reset token after successful password change for that user
         user.getAccountStatus().setPasswordResetToken(null);
+        user.getAccountStatus().setPasswordResetTokenExpiry(null);
 
-        // Save the updated user
+        // Save the updated user with new password
         userRepo.save(user);
 
         logger.info("Password reset successfully for userId={}", user.getId());

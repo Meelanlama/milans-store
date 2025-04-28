@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -22,6 +24,11 @@ public class AccountStatus {
 
     private String verificationToken;
 
+    //for the token expiry time
+    private LocalDateTime verificationTokenExpiry;
+
     private String passwordResetToken;
+
+    private LocalDateTime passwordResetTokenExpiry;
 
 }

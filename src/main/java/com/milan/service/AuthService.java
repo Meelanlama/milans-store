@@ -19,6 +19,8 @@ public interface AuthService {
 
     void processForgotPassword(String email, HttpServletRequest request);
 
+    boolean validateResetPasswordToken(String token);
+
     void resetPassword(String token, @Valid ResetPasswordDto resetPasswordDto);
 
 }

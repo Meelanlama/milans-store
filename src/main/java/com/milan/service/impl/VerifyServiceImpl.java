@@ -7,7 +7,10 @@ import com.milan.model.SiteUser;
 import com.milan.repository.UserRepository;
 import com.milan.service.VerifyService;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.openxml4j.exceptions.InvalidOperationException;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,13 @@ public class VerifyServiceImpl implements VerifyService {
             throw new SuccessException("Account already verified.");
         }
 
+        // Check if token has expired
+        LocalDateTime tokenExpiry = user.getAccountStatus().getVerificationTokenExpiry();
+        if (tokenExpiry != null && LocalDateTime.now().isAfter(tokenExpiry)) {
+            throw new InvalidOperationException("Verification token has expired. Please register again.");
+        }
+
+
         //if user_id and verification token in url match as stored in db of that user
         if(user.getAccountStatus().getVerificationToken().equals(verificationToken)){
 
@@ -33,6 +43,8 @@ public class VerifyServiceImpl implements VerifyService {
             AccountStatus status = user.getAccountStatus();
             status.setIsAccountActive(true);
             status.setVerificationToken(null);
+            // Also clear the verification token expiry time
+            status.setVerificationTokenExpiry(null);
 
             //update user
             userRepo.save(user);
