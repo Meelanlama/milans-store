@@ -5,6 +5,7 @@ import com.milan.dto.UserDto;
 import com.milan.dto.request.LoginRequest;
 import com.milan.dto.request.RefreshTokenRequest;
 import com.milan.dto.response.LoginResponse;
+import com.milan.exception.ResourceNotFoundException;
 import com.milan.model.SiteUser;
 import com.milan.service.AuthService;
 import com.milan.service.UserService;
@@ -13,6 +14,7 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.openxml4j.exceptions.InvalidOperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +51,20 @@ public class AuthController {
 
         logger.error("User registration failed for email={}", userDto.getEmail());
         return CommonUtil.createErrorResponseMessage("Register failed", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    //VERIFY THE ACCOUNT WITH THE LINK IN EMAIL
+    @GetMapping("/verify-register")
+    public ResponseEntity<?> verifyUserAccount(@RequestParam Integer userId, @RequestParam String verificationToken) {
+        logger.info("Verifying user account for userId={} with verification token={}", userId, verificationToken);
+
+        try {
+            authService.verifyRegisterAccount(userId, verificationToken);
+            return CommonUtil.createBuildResponse("Account verification successful", HttpStatus.OK);
+        } catch (InvalidOperationException e) {
+            logger.warn("Account verification failed for userId={}: {}", userId, e.getMessage());
+            return CommonUtil.createErrorResponseMessage(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/login")

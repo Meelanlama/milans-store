@@ -1,9 +1,7 @@
 package com.milan.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.milan.util.RolesEnum;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,5 +21,8 @@ public class Role {
     private Integer id;
 
     private String name;
+
+//    @Enumerated(EnumType.STRING)  // Store enum as a string in DB
+//    private RolesEnum role;
 
 }

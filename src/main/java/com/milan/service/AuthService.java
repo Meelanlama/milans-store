@@ -6,12 +6,12 @@ import com.milan.dto.request.LoginRequest;
 import com.milan.dto.response.LoginResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 public interface AuthService {
 
     Boolean registerUser(UserDto userDto,String url) throws Exception;
+
+    void verifyRegisterAccount(Integer userId, String verificationToken);
 
     LoginResponse login(LoginRequest loginRequest);
 
@@ -19,7 +19,7 @@ public interface AuthService {
 
     void processForgotPassword(String email, HttpServletRequest request);
 
-    boolean validateResetPasswordToken(String token);
+    void validateResetPasswordToken(String token);
 
     void resetPassword(String token, @Valid ResetPasswordDto resetPasswordDto);
 

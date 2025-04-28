@@ -8,6 +8,7 @@ import com.milan.dto.request.LoginRequest;
 import com.milan.dto.response.LoginResponse;
 import com.milan.dto.response.UserResponse;
 import com.milan.exception.ResourceNotFoundException;
+import com.milan.exception.SuccessException;
 import com.milan.model.AccountStatus;
 import com.milan.model.Role;
 import com.milan.model.SiteUser;
@@ -82,7 +83,7 @@ public class AuthServiceImpl implements AuthService {
         //Set account status false and generate token As, they need to verify their email address
         //Create new account status for the new user as they don't have it yet
         AccountStatus status = AccountStatus.builder()
-                .isAccountActive(false)
+                .isAccountActive(false) // Account is not active by default until email is verified
                 .verificationToken(UUID.randomUUID().toString())
                 .verificationTokenExpiry(LocalDateTime.now().plusHours(24)) // Set expiry of token to 24 hours from now
                 .build();
@@ -106,7 +107,6 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-
     private void setRole(UserDto userDto, SiteUser saveUser) {
         // Extract role IDs from the UserDto object
         List<Integer> roleId = userDto.getRoles()
@@ -117,9 +117,51 @@ public class AuthServiceImpl implements AuthService {
         // Fetch Role entities from the database based on the extracted role IDs
         List<Role> roles = roleRepo.findAllById(roleId);
 
+        // Ensure that roles exist in the database
+        if (roles.isEmpty()) {
+            throw new ResourceNotFoundException("One or more roles not found");
+        }
+
         // Assign the fetched roles to the SiteUser entity
         // Convert the list into a set (as setRoles expects a Set)
         saveUser.setRoles(new HashSet<>(roles));
+    }
+
+    @Override
+    public void verifyRegisterAccount(Integer userId, String verificationToken) {
+
+        //first find if user id is in db or not and get the user details
+        SiteUser user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid user"));
+
+        // Get the account status of user
+        AccountStatus accountStatus = user.getAccountStatus();
+
+        // Check if the verification token has expired
+        if (accountStatus.getVerificationTokenExpiry() != null && LocalDateTime.now().isAfter(accountStatus.getVerificationTokenExpiry())) {
+            throw new InvalidOperationException("Verification token has expired. Please request a new registration link.");
+        }
+
+        //if user try to verify account again through link then throw exception as the account is already verified and token will be null in db
+        if(accountStatus.getVerificationToken() == null){
+            throw new InvalidOperationException("Account already verified.");
+        }
+
+        // Validate token match
+        if (!accountStatus.getVerificationToken().equals(verificationToken)) {
+            logger.warn("Token invalid for user {}", userId);
+            throw new InvalidOperationException("Invalid verification token.");
+        }
+
+        // If token is valid, mark the account as verified and clear the verification data
+        accountStatus.setIsAccountActive(true);
+        accountStatus.setVerificationToken(null);
+        //Clear the verification token expiry time
+        accountStatus.setVerificationTokenExpiry(null);
+
+        // Save the updated user
+        userRepo.save(user);
+        logger.debug("User {} successfully verified account", userId);
     }
 
     private void emailSend(SiteUser savedUser, String url) throws Exception {
@@ -127,7 +169,7 @@ public class AuthServiceImpl implements AuthService {
         // Build the verification URL with proper query parameter formatting and URL encoding
         //Account verification done is verification service
         String verificationToken = URLEncoder.encode(savedUser.getAccountStatus().getVerificationToken(), StandardCharsets.UTF_8.toString());
-        String verificationUrl = url + "/store/v1/account-verify/verify-register?userId=" + savedUser.getId() + "&verificationToken=" + verificationToken;
+        String verificationUrl = url + "/store/v1/auth/verify-register?userId=" + savedUser.getId() + "&verificationToken=" + verificationToken;
 
         try {
             String emailMessage = "Hello, <b>[[username]]</b><br>"
@@ -271,7 +313,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public boolean validateResetPasswordToken(String token) {
+    public void validateResetPasswordToken(String token) {
 
         // Find the user by the password reset token
         SiteUser user = userRepo.findByAccountStatusPasswordResetToken(token)
@@ -292,8 +334,6 @@ public class AuthServiceImpl implements AuthService {
         if (tokenExpiry != null && LocalDateTime.now().isAfter(tokenExpiry)) {
             throw new InvalidOperationException("Password reset token has expired. Please request a new one.");
         }
-
-        return true;  // Return true if the token is valid
 
     }
 
@@ -358,6 +398,5 @@ public class AuthServiceImpl implements AuthService {
             throw e;
         }
     }
-
 
 }

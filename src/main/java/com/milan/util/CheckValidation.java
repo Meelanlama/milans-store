@@ -57,7 +57,17 @@ public class CheckValidation {
         }
 
         //Email
-        if(!StringUtils.hasText(userDto.getEmail()) || !userDto.getEmail().matches(MyConstants.EMAIL_REGEX)) {
+//        if(!StringUtils.hasText(userDto.getEmail()) || !userDto.getEmail().matches(MyConstants.EMAIL_REGEX)) {
+//            throw new IllegalArgumentException("Please enter valid email");
+//        }else {
+//            //validate duplicate email
+//            boolean exist = userRepo.existsByEmail(userDto.getEmail());
+//            if(exist) {
+//                throw new ExistDataException("Email already exists");
+//            }
+//        }
+
+        if(!StringUtils.hasText(userDto.getEmail())) {
             throw new IllegalArgumentException("Please enter valid email");
         }else {
             //validate duplicate email
