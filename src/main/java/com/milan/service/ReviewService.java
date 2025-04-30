@@ -2,8 +2,7 @@ package com.milan.service;
 
 import com.milan.dto.ReviewDto;
 import com.milan.dto.ReviewRequestDto;
-import com.milan.dto.response.PageableResponse;
-import org.springframework.data.domain.Page;
+import com.milan.handler.PageableResponse;
 
 import java.nio.file.AccessDeniedException;
 

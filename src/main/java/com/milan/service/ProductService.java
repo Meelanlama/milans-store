@@ -1,8 +1,7 @@
 package com.milan.service;
 
-import com.milan.dto.CategoryDto;
 import com.milan.dto.ProductDto;
-import com.milan.dto.response.PageableResponse;
+import com.milan.handler.PageableResponse;
 
 public interface ProductService {
 

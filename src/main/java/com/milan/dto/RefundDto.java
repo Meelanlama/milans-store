@@ -1,6 +1,6 @@
 package com.milan.dto;
 
-import com.milan.util.RefundStatus;
+import com.milan.enums.RefundStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;

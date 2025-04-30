@@ -4,7 +4,7 @@ import com.milan.dto.ChangePasswordRequestDto;
 import com.milan.dto.UpdateProfileDto;
 import com.milan.dto.UserDto;
 import com.milan.dto.UserProfileResponseDto;
-import com.milan.dto.response.PageableResponse;
+import com.milan.handler.PageableResponse;
 import com.milan.exception.ResourceNotFoundException;
 import com.milan.handler.PageMapper;
 import com.milan.model.SiteUser;

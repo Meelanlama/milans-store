@@ -238,14 +238,14 @@ public class CheckValidation {
             }
 
             // Validate isActive
-            if (ObjectUtils.isEmpty(productDto.getIsActive())) {
-                error.put("IsActive", "IsActive field is empty or null");
-            } else {
-                if (productDto.getIsActive() != Boolean.TRUE.booleanValue() &&
-                        productDto.getIsActive() != Boolean.FALSE.booleanValue()) {
-                    error.put("IsActive", "Tried to add Invalid value in isActive field");
-                }
-            }
+//            if (ObjectUtils.isEmpty(productDto.getIsActive())) {
+//                error.put("IsActive", "IsActive field is empty or null");
+//            } else {
+//                if (productDto.getIsActive() != Boolean.TRUE.booleanValue() &&
+//                        productDto.getIsActive() != Boolean.FALSE.booleanValue()) {
+//                    error.put("IsActive", "Tried to add Invalid value in isActive field");
+//                }
+//            }
 
             // Validate category of products
             if (ObjectUtils.isEmpty(productDto.getCategory())) {

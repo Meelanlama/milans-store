@@ -10,6 +10,10 @@ import com.milan.model.SiteUser;
 import com.milan.service.AuthService;
 import com.milan.service.UserService;
 import com.milan.util.CommonUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -25,8 +29,9 @@ import org.springframework.util.ObjectUtils;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 
+@Tag(name = "AUTHENTICATION", description = "API for Register & Login")
 @RestController
-@RequestMapping("/store/v1/auth")
+@RequestMapping("${api.prefix}/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -34,6 +39,11 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201",description = "Register successful"),
+            @ApiResponse(responseCode = "500",description = "Internal server error"),
+            @ApiResponse(responseCode = "400",description = "Bad Request")})
+    @Operation(summary = "Register User API")
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserDto userDto, HttpServletRequest request) throws Exception {
 
@@ -54,6 +64,9 @@ public class AuthController {
     }
 
     //VERIFY THE ACCOUNT WITH THE LINK IN EMAIL
+    @Operation(summary = "Verify New Register User Via Email")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",description = "Verify successful")})
     @GetMapping("/verify-register")
     public ResponseEntity<?> verifyUserAccount(@RequestParam Integer userId, @RequestParam String verificationToken) {
         logger.info("Verifying user account for userId={} with verification token={}", userId, verificationToken);
@@ -67,6 +80,7 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Create a new user", description = "Saves user data")
     @PostMapping("/login")
     ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) throws Exception{
 
@@ -83,6 +97,11 @@ public class AuthController {
         return CommonUtil.createBuildResponse(loginResponse, HttpStatus.OK);
     }
 
+    @Operation(summary = "Refresh access token using refresh token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
+            @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
+    })
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody RefreshTokenRequest request) {
         try {
@@ -93,6 +112,11 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Send reset password link to email")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password reset link sent successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid email or failure sending email")
+    })
     @PostMapping("/forget-password")
     public ResponseEntity<?> processForgetPassword(@RequestParam String email, HttpServletRequest request) throws MessagingException, UnsupportedEncodingException {
 
@@ -105,6 +129,11 @@ public class AuthController {
 
     }
 
+    @Operation(summary = "Validate password reset token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Token is valid"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired token")
+    })
     // GET endpoint to validate a password reset token
     // This endpoint is called when a user clicks on a reset link in their email
     @GetMapping("/reset-password")
@@ -118,6 +147,11 @@ public class AuthController {
         return CommonUtil.createBuildResponseMessage("Token is valid, Please reset your password", HttpStatus.OK);
     }
 
+    @Operation(summary = "Reset password using valid token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid token or password criteria not met")
+    })
     // POST request to handle resetting the password
     // The token is received as a query parameter and the new password is provided in the request body
     @PostMapping("/reset-password")

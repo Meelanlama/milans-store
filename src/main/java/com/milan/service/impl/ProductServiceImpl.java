@@ -1,8 +1,7 @@
 package com.milan.service.impl;
 
-import com.milan.dto.CategoryDto;
 import com.milan.dto.ProductDto;
-import com.milan.dto.response.PageableResponse;
+import com.milan.handler.PageableResponse;
 import com.milan.exception.ResourceNotFoundException;
 import com.milan.handler.PageMapper;
 import com.milan.model.Category;
@@ -21,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -50,6 +50,11 @@ public class ProductServiceImpl implements ProductService {
 
         //convert productDto to product entity
         Product product = mapper.map(productDto, Product.class);
+
+        //for new products Explicitly mark as not deleted and active to true
+        product.setIsDeleted(false);
+        product.setDeletedOn(null);
+        product.setIsActive(true);
 
         // Calculate discounted price and set automatically
         if (productDto.getDiscountPercent() > 0
@@ -171,6 +176,8 @@ public class ProductServiceImpl implements ProductService {
         if(byId.isPresent()){
             Product product = byId.get();
             product.setIsActive(false);
+            product.setIsDeleted(true); // Mark as deleted
+            product.setDeletedOn(LocalDateTime.now()); // Set deletion timestamp
             productRepo.save(product);
             logger.info("Soft deleted product with ID: {}", productId);
             return true;

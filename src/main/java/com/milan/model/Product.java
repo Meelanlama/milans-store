@@ -4,6 +4,7 @@ import com.milan.dto.ProductDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +53,12 @@ public class Product extends BaseDates{
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
+
+    @Column(name = "deleted_on")
+    private LocalDateTime deletedOn;
 
     //helps in updating product using builder pattern
     public Product updateFromDto(ProductDto dto) {

@@ -1,9 +1,8 @@
 package com.milan.service.impl;
 
-import com.milan.dto.ProductDto;
 import com.milan.dto.ReviewDto;
 import com.milan.dto.ReviewRequestDto;
-import com.milan.dto.response.PageableResponse;
+import com.milan.handler.PageableResponse;
 import com.milan.exception.ResourceNotFoundException;
 import com.milan.handler.PageMapper;
 import com.milan.model.Product;
@@ -15,7 +14,7 @@ import com.milan.repository.ProductRepository;
 import com.milan.repository.ReviewRepository;
 import com.milan.service.ReviewService;
 import com.milan.util.CommonUtil;
-import com.milan.util.OrderStatus;
+import com.milan.enums.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;

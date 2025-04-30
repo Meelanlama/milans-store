@@ -2,12 +2,17 @@ package com.milan.controller;
 
 import com.milan.dto.*;
 import com.milan.dto.response.ImageResponse;
-import com.milan.dto.response.PageableResponse;
+import com.milan.handler.PageableResponse;
 import com.milan.model.SiteUser;
-import com.milan.repository.UserRepository;
 import com.milan.service.ImageService;
 import com.milan.service.UserService;
 import com.milan.util.CommonUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +27,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.AccessDeniedException;
 
 import static com.milan.util.MyConstants.*;
 
+@Tag(name = "USER MANAGEMENT", description = "APIs for user profile management and administrative user operations")
 @RestController
-@RequestMapping("/store/v1/users")
+@RequestMapping("${api.prefix}/users")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -40,6 +45,10 @@ public class UserController {
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserController.class);
 
+
+    @Operation(summary = "Get user profile", description = "Retrieve current user's profile details")
+    @ApiResponse(responseCode = "200", description = "Profile retrieved successfully",
+            content = @Content(schema = @Schema(implementation = UserProfileResponseDto.class)))
     //display user profile details thats only accessible to the logged in user
     @GetMapping("/my-profile")
     public ResponseEntity<UserProfileResponseDto> getUserProfileDetails() {
@@ -49,6 +58,11 @@ public class UserController {
         return ResponseEntity.ok(userProfile);
     }
 
+    @Operation(summary = "Update profile", description = "Update the current user's profile information")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data")
+    })
     //Update user profile details
     @PutMapping("/profile-update")
     public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileDto updateProfileDto) {
@@ -57,6 +71,13 @@ public class UserController {
         return ResponseEntity.ok("Profile updated successfully");
     }
 
+
+    @Operation(summary = "Change password", description = "Update current user's password (Requires authentication)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password changed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid current password"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()") // Any logged-in user
     public ResponseEntity<?> changePassword(@RequestBody @Valid ChangePasswordRequestDto request) {
@@ -66,6 +87,9 @@ public class UserController {
         return CommonUtil.createBuildResponseMessage("Password changed successfully", HttpStatus.OK);
     }
 
+    @Operation(summary = "Get all users (Admin)", description = "Retrieve paginated list of all users (Admin only)")
+    @ApiResponse(responseCode = "200", description = "List of users retrieved",
+            content = @Content(schema = @Schema(implementation = PageableResponse.class)))
     //get all the active users in pageable formats
     @GetMapping("/all-users")
     @PreAuthorize(ROLE_ADMIN)
@@ -82,6 +106,9 @@ public class UserController {
         return CommonUtil.createBuildResponse(allUsers, HttpStatus.OK);
     }
 
+    @Operation(summary = "Search users (Admin)", description = "Search users by first name with pagination (Admin only)")
+    @ApiResponse(responseCode = "200", description = "Search results retrieved",
+            content = @Content(schema = @Schema(implementation = PageableResponse.class)))
     //search?firstName=Milan&pageNumber=1&pageSize=10&sortBy=firstName&sortDir=asc - returns all user of that name
     //No Matching First Name	/search?firstName=InvalidName	Empty content array in response
     //Empty First Name Param	/search?firstName=	Returns all users (treated as null)
@@ -100,6 +127,12 @@ public class UserController {
         return CommonUtil.createBuildResponse(users, HttpStatus.OK);
     }
 
+    @Operation(summary = "Upload profile image", description = "Upload/update user's profile image")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Image uploaded successfully",
+                    content = @Content(schema = @Schema(implementation = ImageResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid image file")
+    })
     @PostMapping("/upload-profile-image")
     public ResponseEntity<?> uploadProductImage( @RequestParam("image") MultipartFile image) throws IOException {
 
@@ -123,6 +156,9 @@ public class UserController {
         return CommonUtil.createBuildResponse(response,HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Get profile image", description = "Retrieve the user's profile image")
+    @ApiResponse(responseCode = "200", description = "Image retrieved successfully",
+            content = @Content(mediaType = MediaType.IMAGE_JPEG_VALUE))
     @GetMapping("/profile-image")
     public void displayProfileImage(HttpServletResponse response) throws IOException {
 
@@ -149,6 +185,8 @@ public class UserController {
         StreamUtils.copy(resource, response.getOutputStream());
     }
 
+    @Operation(summary = "Delete profile image", description = "Remove the current user's profile image")
+    @ApiResponse(responseCode = "200", description = "Image deleted successfully")
     @DeleteMapping("/delete-profile-image")
     public ResponseEntity<?> deleteProfileImage() {
 
@@ -162,6 +200,11 @@ public class UserController {
         return CommonUtil.createBuildResponseMessage("Profile image deleted successfully", HttpStatus.OK);
     }
 
+    @Operation(summary = "Delete account", description = "Permanently delete current user account")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Account deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Authentication required")
+    })
     @DeleteMapping("/account-delete")
     public ResponseEntity<?> deleteAccountDetails() {
 

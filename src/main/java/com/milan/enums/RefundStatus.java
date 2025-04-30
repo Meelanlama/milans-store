@@ -1,4 +1,4 @@
-package com.milan.util;
+package com.milan.enums;
 
 public enum RefundStatus {
     PENDING,

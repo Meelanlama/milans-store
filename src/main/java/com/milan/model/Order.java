@@ -1,6 +1,6 @@
 package com.milan.model;
 
-import com.milan.util.OrderStatus;
+import com.milan.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

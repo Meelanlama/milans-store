@@ -39,3 +39,22 @@ image:
   user: "images/users/"
   product: "images/products/"
   category: "images/categories/"
+
+api:
+  prefix: /store/v1
+
+springdoc:
+  swagger-ui:
+    # Sort operations (endpoints) by HTTP method (GET, POST, etc.) in Swagger UI
+    operations-sorter: method
+    # Sort tags alphabetically in the Swagger UI for better organization
+    tags-sorter: alpha
+    # Custom path to access the Swagger UI (e.g., http://localhost:8080/milan-docs)
+    path: /milan-docs
+  api-docs:
+    # Custom path to access the raw OpenAPI JSON (e.g., http://localhost:8080/milan-api-docs)
+    path: /milan-api-docs
+
+#  Access URLs for Swagger
+#  Swagger UI: http://localhost:8080/milan-docs
+#  OpenAPI JSON: http://localhost:8080/milan-api-docs

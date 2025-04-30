@@ -1,6 +1,6 @@
 package com.milan.dto;
 
-import com.milan.util.OrderStatus;
+import com.milan.enums.OrderStatus;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;

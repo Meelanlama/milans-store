@@ -50,7 +50,12 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())  // Safe: Using stateless JWT authentication
                 .authorizeHttpRequests(req -> req
                         // Allow public access to these endpoints
-                        .requestMatchers("/store/v1/account-verify/**", "/store/v1/auth/**").permitAll()
+                        .requestMatchers("/store/v1/account-verify/**", "/store/v1/auth/**",
+                                "/actuator/**","/swagger-ui/**",
+                                "/milan-docs/**", // custom UI path
+                                "/milan-api-docs/**", //custom spec path
+                                "/v3/api-docs/**"    // Library's default paths
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -1,5 +1,6 @@
-package com.milan.dto.response;
+package com.milan.handler;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.util.Collections;
@@ -14,11 +15,17 @@ import java.util.List;
  * Generic response class for paginated data.
  * Allows returning any type of list (Users, Products, Categories) with page info.
  */
+@Schema(description = "Paginated response wrapper")
+
 public class PageableResponse<T> {
 
+    @Schema(description = "List of items in current page")
     private List<T> content;
+    @Schema(example = "1", description = "Current page number")
     private int pageNo;
+    @Schema(example = "10", description = "Number of items per page")
     private int pageSize;
+    @Schema(example = "100", description = "Total number of items")
     private long totalElements;
     private int totalPages;
     private Boolean isFirst;

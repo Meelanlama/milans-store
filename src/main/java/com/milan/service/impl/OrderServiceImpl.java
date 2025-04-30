@@ -13,7 +13,7 @@ import com.milan.dto.CreateOrderRequestDto;
 import com.milan.dto.OrderDto;
 import com.milan.dto.OrderItemDto;
 import com.milan.dto.request.EmailRequest;
-import com.milan.dto.response.PageableResponse;
+import com.milan.handler.PageableResponse;
 import com.milan.exception.ResourceNotFoundException;
 import com.milan.handler.PageMapper;
 import com.milan.model.*;
@@ -22,9 +22,8 @@ import com.milan.repository.OrderRepository;
 import com.milan.repository.ProductRepository;
 import com.milan.service.OrderService;
 import com.milan.util.CommonUtil;
-import com.milan.util.OrderStatus;
+import com.milan.enums.OrderStatus;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
@@ -36,18 +35,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.AccessDeniedException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.itextpdf.kernel.pdf.PdfName.Font;
 
 @Service
 @RequiredArgsConstructor

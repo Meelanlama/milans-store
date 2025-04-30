@@ -1,6 +1,6 @@
 package com.milan.model;
 
-import com.milan.util.RefundStatus;
+import com.milan.enums.RefundStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

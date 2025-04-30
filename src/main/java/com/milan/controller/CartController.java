@@ -4,6 +4,9 @@ import com.milan.dto.AddCartItems;
 import com.milan.dto.CartDto;
 import com.milan.service.CartService;
 import com.milan.util.CommonUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
 
+//@SecurityRequirement(name = "Authorization")
+@Tag(name = "CART MANAGEMENT", description = "Endpoints for managing user carts")
 @RestController
-@RequestMapping("/store/v1/carts")
+@RequestMapping("${api.prefix}/carts")
 @RequiredArgsConstructor
 public class CartController {
 
@@ -21,6 +26,7 @@ public class CartController {
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CartController.class);
 
+    @Operation(summary = "Add items to cart", description = "Creates a new cart or adds items to the existing cart of the logged-in user.")
     //create cart and add items in that cart
     @PostMapping("/add")
     @PreAuthorize("isAuthenticated() and hasRole('USER')")
@@ -37,8 +43,9 @@ public class CartController {
         return CommonUtil.createBuildResponse(cartDto, HttpStatus.CREATED);
     }
 
-    @PreAuthorize("isAuthenticated() and hasRole('USER')")
+    @Operation(summary = "Remove item from cart", description = "Removes a specific item from the user's cart by item ID.")
     @DeleteMapping("/remove/{cartItemId}")
+    @PreAuthorize("isAuthenticated() and hasRole('USER')")
     public ResponseEntity<?> removeItem(@PathVariable int cartItemId) throws AccessDeniedException {
 
         cartService.removeItemFromCart(cartItemId);
@@ -48,6 +55,7 @@ public class CartController {
         return CommonUtil.createBuildResponseMessage("Item removed successfully from cart", HttpStatus.OK);
     }
 
+    @Operation(summary = "Clear cart", description = "Removes all items from the logged-in user's cart.")
     @PreAuthorize("isAuthenticated() and hasRole('USER')")
     @DeleteMapping("/clear")
     public ResponseEntity<?> clearCart() {
@@ -59,6 +67,7 @@ public class CartController {
         return CommonUtil.createBuildResponseMessage("Cart cleared successfully", HttpStatus.OK);
     }
 
+    @Operation(summary = "View my cart", description = "Fetches the cart items of the logged-in user.")
     @PreAuthorize("isAuthenticated() and hasRole('USER')")
     @GetMapping("/myCart")
     public ResponseEntity<?> getMyCart() {

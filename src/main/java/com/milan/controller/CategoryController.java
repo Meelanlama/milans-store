@@ -3,11 +3,16 @@ package com.milan.controller;
 import com.milan.dto.CategoryDto;
 import com.milan.dto.ProductDto;
 import com.milan.dto.response.ImageResponse;
-import com.milan.dto.response.PageableResponse;
+import com.milan.handler.PageableResponse;
 import com.milan.service.CategoryService;
 import com.milan.service.ImageService;
 import com.milan.service.ProductService;
 import com.milan.util.CommonUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +29,9 @@ import java.io.InputStream;
 
 import static com.milan.util.MyConstants.*;
 
-@RequestMapping(path = "/store/v1/category")
+//@SecurityRequirement(name = "Authorization")
+@Tag(name = "CATEGORY MANAGEMENT", description = "APIs for Category CRUD operations")
+@RequestMapping(path = "${api.prefix}/category")
 @RestController
 @RequiredArgsConstructor
 public class CategoryController {
@@ -38,6 +45,11 @@ public class CategoryController {
     @Value("${image.category}")
     private String categoryImagePath;
 
+    @Operation(summary = "Create new category", description = "This API creates a new category and returns success/failure message")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Category created successfully"),
+            @ApiResponse(responseCode = "500", description = "Failed to create category")
+    })
     @PostMapping("/create")
     @PreAuthorize(ROLE_ADMIN)
     public ResponseEntity<?> createCategory(@RequestBody CategoryDto categoryDto) {
@@ -51,6 +63,12 @@ public class CategoryController {
         return CommonUtil.createErrorResponseMessage("Category not saved", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+
+    @Operation(summary = "Upload category image", description = "This API uploads an image for a specific category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Image uploaded successfully"),
+            @ApiResponse(responseCode = "500", description = "Failed to upload image")
+    })
     @PostMapping("/upload-image/{categoryId}")
     @PreAuthorize(ROLE_ADMIN)
     public ResponseEntity<?> uploadCategoryImage(@PathVariable("categoryId") Integer categoryId, @RequestParam("image") MultipartFile image) throws IOException {
@@ -74,6 +92,11 @@ public class CategoryController {
        return CommonUtil.createBuildResponse(response,HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Display category image", description = "This API retrieves and displays the image for a specific category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image displayed successfully"),
+            @ApiResponse(responseCode = "404", description = "Image not found")
+    })
     @GetMapping("/image/{categoryId}")
     public void displayCategoryImage(@PathVariable Integer categoryId, HttpServletResponse response) throws IOException {
 
@@ -91,20 +114,39 @@ public class CategoryController {
         StreamUtils.copy(resource, response.getOutputStream());
     }
 
+    @Operation(summary = "Get category by ID", description = "This API retrieves a specific category by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Category found"),
+            @ApiResponse(responseCode = "404", description = "Category not found")
+    })
     @GetMapping("/{categoryId}")
     public ResponseEntity<?> getCategoryById(@PathVariable Integer categoryId) {
+
         CategoryDto categoryById = categoryService.getCategoryById(categoryId);
+
         return CommonUtil.createBuildResponse(categoryById,HttpStatus.OK);
     }
 
+    @Operation(summary = "Update category", description = "This API updates an existing category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Category updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Category not found")
+    })
     @PutMapping("/update/{categoryId}")
     @PreAuthorize(ROLE_ADMIN)
-    public ResponseEntity<?> updateCategory(@RequestBody CategoryDto categoryDto,
-                                                      @PathVariable("categoryId") Integer categoryId) {
+    public ResponseEntity<?> updateCategory(@RequestBody CategoryDto categoryDto, @PathVariable("categoryId") Integer categoryId) {
+
         CategoryDto updatedCategory = this.categoryService.updateCategory(categoryDto, categoryId);
+
         return CommonUtil.createBuildResponse(updatedCategory, HttpStatus.OK);
+
     }
 
+    @Operation(summary = "Delete category", description = "This API deletes a category by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Category deleted successfully"),
+            @ApiResponse(responseCode = "500", description = "Failed to delete category")
+    })
     @DeleteMapping("/delete/{categoryId}")
     @PreAuthorize(ROLE_ADMIN)
     public ResponseEntity<?> deleteCategory(@PathVariable("categoryId") Integer categoryId) {
@@ -114,8 +156,13 @@ public class CategoryController {
             return CommonUtil.createErrorResponseMessage("Category not deleted. The category might not exist.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return CommonUtil.createBuildResponseMessage("Category deleted successfully", HttpStatus.OK);
+
     }
 
+    @Operation(summary = "Get all categories", description = "This API retrieves all categories with pagination and sorting options")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Categories retrieved successfully")
+    })
     @GetMapping("/getAllCategories")
     public ResponseEntity<?> getAllCategories(
             @RequestParam(value = "pageNo", defaultValue = DEFAULT_PAGE_NO) int pageNo,
@@ -130,6 +177,11 @@ public class CategoryController {
         return CommonUtil.createBuildResponse(categoryResponse, HttpStatus.OK);
     }
 
+    @Operation(summary = "Get products by category", description = "This API retrieves all products belonging to a specific category with pagination and sorting options")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Products retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Category not found")
+    })
     //this method is useful: when you want to get all products of that specific category only in pageable format in frontend
     @GetMapping("/{categoryId}/productsByCategory")
     public ResponseEntity<?> getProductsByCategoryId(@PathVariable String categoryId,

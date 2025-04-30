@@ -1,4 +1,4 @@
-package com.milan.util;
+package com.milan.enums;
 
 public enum OrderStatus {
     IN_PROGRESS(1, "Order In Progress"),

@@ -1,9 +1,6 @@
 package com.milan.dto;
 
-import com.milan.util.RefundStatus;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter

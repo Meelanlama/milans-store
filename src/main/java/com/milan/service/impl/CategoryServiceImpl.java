@@ -1,7 +1,7 @@
 package com.milan.service.impl;
 
 import com.milan.dto.CategoryDto;
-import com.milan.dto.response.PageableResponse;
+import com.milan.handler.PageableResponse;
 import com.milan.exception.ExistDataException;
 import com.milan.exception.ResourceNotFoundException;
 import com.milan.handler.PageMapper;

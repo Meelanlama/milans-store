@@ -3,7 +3,7 @@ package com.milan.repository;
 import com.milan.model.OrderItem;
 import com.milan.model.Product;
 import com.milan.model.SiteUser;
-import com.milan.util.OrderStatus;
+import com.milan.enums.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

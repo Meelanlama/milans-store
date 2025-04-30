@@ -1,6 +1,5 @@
 package com.milan.model;
 
-import com.milan.util.RolesEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
