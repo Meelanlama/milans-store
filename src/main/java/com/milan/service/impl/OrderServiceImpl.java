@@ -23,6 +23,7 @@ import com.milan.repository.ProductRepository;
 import com.milan.service.OrderService;
 import com.milan.util.CommonUtil;
 import com.milan.enums.OrderStatus;
+import com.milan.util.PageUtil;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -182,9 +183,11 @@ public class OrderServiceImpl implements OrderService {
         SiteUser user = CommonUtil.getLoggedInUser();
 
         //ternary operator for checking sortDir value
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        // Creating Pageable with sorting using utility method for reuse and cleaner code
+        Pageable pageRequest = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         Page<Order> userOrder = orderRepo.findByUserId(user.getId(), pageRequest);
 
@@ -204,9 +207,12 @@ public class OrderServiceImpl implements OrderService {
     public PageableResponse<OrderDto> getAllOrders(int pageNo, int pageSize, String sortBy, String sortDir) {
 
         //ternary operator for checking sortDir value
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        // Creating Pageable with sorting using utility method for reuse and cleaner code
+        Pageable pageable = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
+
         Page<Order> page = this.orderRepo.findAll(pageable);
 
         return PageMapper.getPageableResponse(page, OrderDto.class);
@@ -315,8 +321,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public PageableResponse<OrderDto> filterOrders(int pageNo, int pageSize, String sortBy, String sortDir, String status, String startDate, String endDate) {
 
-        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+//        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+//        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        // Creating Pageable with sorting using utility method for reuse and cleaner code
+        Pageable pageable = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         // Convert String date to LocalDateTime
         //yyyy-MM-ddTHH:mm:ss -> Time is added manually here

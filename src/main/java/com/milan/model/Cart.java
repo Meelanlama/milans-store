@@ -25,7 +25,7 @@ public class Cart extends BaseDates{
     // Only one cart is assigned to user
     // A user can have one active cart at a time (One-to-One)
     @OneToOne
-    @JoinColumn(name="user_id")
+    @JoinColumn(name = "user_id", nullable = false, unique = true) // unique ensures one cart per user
     private SiteUser user;
 
     // One cart can have many cart items (One-to-Many)

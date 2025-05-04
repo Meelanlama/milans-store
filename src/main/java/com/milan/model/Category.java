@@ -16,15 +16,15 @@ public class Category extends BaseDates {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(length = 60, nullable = false)
+    @Column(length = 60, nullable = false, unique = true)
     private String categoryName;
 
     private String categoryImage; // Stores URL/path to the image
 
     private String description;
 
-    @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
-    private Boolean isActive;
+    @Column(nullable = false)
+    private Boolean isActive = true;
 
     //One category has many products
     // Load products only when accessed, and cascade changes (save/delete) from category to products

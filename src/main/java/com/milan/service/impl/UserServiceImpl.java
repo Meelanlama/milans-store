@@ -11,6 +11,7 @@ import com.milan.model.SiteUser;
 import com.milan.repository.UserRepository;
 import com.milan.service.UserService;
 import com.milan.util.CommonUtil;
+import com.milan.util.PageUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -173,9 +174,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public PageableResponse<UserProfileResponseDto> getAllUsers(int pageNo, int pageSize, String sortBy, String sortDir) {
 
-        Sort sort = (sortDir.equalsIgnoreCase("asc")) ? (Sort.by(sortBy).ascending()) : (Sort.by(sortBy).descending());
+//        Sort sort = (sortDir.equalsIgnoreCase("asc")) ? (Sort.by(sortBy).ascending()) : (Sort.by(sortBy).descending());
+//
+//        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageable = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         //find only users
         Page<SiteUser> page = userRepo.findByRoles_Name("USER",pageable);
@@ -199,9 +202,11 @@ public class UserServiceImpl implements UserService {
         // Adjust for 1-based page number from frontend
         //int adjustedPageNo = pageNo > 0 ? pageNo - 1 : 0;
 
-        Sort sort = (sortDir.equalsIgnoreCase("asc")) ? (Sort.by(sortBy).ascending()) : (Sort.by(sortBy).descending());
+//        Sort sort = (sortDir.equalsIgnoreCase("asc")) ? (Sort.by(sortBy).ascending()) : (Sort.by(sortBy).descending());
+//
+//        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageable = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         // Querying in the database directly with the repository
         Page<SiteUser> usersPage = userRepo.searchUsers(firstName, pageable);

@@ -2,16 +2,19 @@ spring:
   main:
     banner-mode: off
   datasource:
-    url: jdbc:mysql://localhost:3306/milan_store
+    url: jdbc:mysql://mysql-db:3306/milan_store
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: admin
+    hikari:
+      initialization-fail-timeout: 60000   # Wait up to 60s for DB before failing
+      connection-timeout: 30000            # DB connection timeout per attempt
   data:
     jdbc:
       dialect: mysql
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -19,8 +22,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: lamameelan32@gmail.com
-    password: ivevewzysomlojaq
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
     properties:
       mail:
         smtp:

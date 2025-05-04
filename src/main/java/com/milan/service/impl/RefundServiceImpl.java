@@ -15,6 +15,7 @@ import com.milan.service.RefundService;
 import com.milan.util.CommonUtil;
 import com.milan.enums.OrderStatus;
 import com.milan.enums.RefundStatus;
+import com.milan.util.PageUtil;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -151,9 +152,11 @@ public class RefundServiceImpl implements RefundService {
     public PageableResponse<RefundDto> getAllRefunds(int pageNo, int pageSize, String sortBy, String sortDir) {
 
         //ternary operator for checking sortDir value
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageable = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         Page<Refund> page = refundRepo.findAll(pageable);
 
@@ -172,9 +175,11 @@ public class RefundServiceImpl implements RefundService {
         SiteUser loggedInUser = CommonUtil.getLoggedInUser();
 
         //ternary operator for checking sortDir value
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageable = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         /*
          * Finds refunds requested by a specific user by navigating through the order's user_id.

@@ -1,9 +1,6 @@
 package com.milan.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -20,13 +17,16 @@ public class AccountStatus {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
     private Boolean isAccountActive;
 
+    @Column(unique = true)
     private String verificationToken;
 
     //for the token expiry time
     private LocalDateTime verificationTokenExpiry;
 
+    @Column(unique = true)
     private String passwordResetToken;
 
     private LocalDateTime passwordResetTokenExpiry;

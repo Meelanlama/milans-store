@@ -15,6 +15,7 @@ import com.milan.repository.ReviewRepository;
 import com.milan.service.ReviewService;
 import com.milan.util.CommonUtil;
 import com.milan.enums.OrderStatus;
+import com.milan.util.PageUtil;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -164,9 +165,12 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public PageableResponse<ReviewDto> getReviewsByProduct(Integer productId, int pageNo, int pageSize,String sortBy,String sortDir) {
 
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageable = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
+
 
         // Fetch the product first as it's needed because findByProduct expects Product
         Product product = productRepository.findById(productId)
@@ -210,9 +214,11 @@ public class ReviewServiceImpl implements ReviewService {
         SiteUser user = CommonUtil.getLoggedInUser();
 
         //ternary operator for checking sortDir value
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageRequest = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         Page<Review> reviews = reviewRepository.findByUser(user, pageRequest);
 

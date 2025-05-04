@@ -9,6 +9,7 @@ import com.milan.model.Category;
 import com.milan.repository.CategoryRepository;
 import com.milan.service.CategoryService;
 import com.milan.util.CheckValidation;
+import com.milan.util.PageUtil;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -106,9 +107,13 @@ public class CategoryServiceImpl implements CategoryService {
     public PageableResponse<CategoryDto> getAllCategories(int pageNo, int pageSize, String sortBy, String sortDir) {
 
         //ternary operator for checking sortDir value
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        //With the help of util method to create a Pageable object with sorting.
+        // Creating Pageable with sorting using utility method for reuse and cleaner code
+        Pageable pageRequest = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         //get categories that are active and not soft deleted
         Page<Category> categories = categoryRepo.findAllActiveCategories(pageRequest);

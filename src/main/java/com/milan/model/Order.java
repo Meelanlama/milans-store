@@ -21,13 +21,16 @@ public class Order extends BaseDates{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false, unique = true)
     private String orderIdentifier;
 
     // Total price of the order
+    @Column(nullable = false)
     private Double totalOrderAmount;
 
     // Status stored in enum
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private OrderStatus status;
 
     private String paymentMethod;

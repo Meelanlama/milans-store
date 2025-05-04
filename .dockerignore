@@ -1,0 +1,8 @@
+.git
+.gitignore
+.idea
+*.iml
+*.md
+application.yml
+application-local.yml
+database/init

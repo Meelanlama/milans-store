@@ -11,6 +11,7 @@ import com.milan.repository.ProductRepository;
 import com.milan.service.ImageService;
 import com.milan.service.ProductService;
 import com.milan.util.CheckValidation;
+import com.milan.util.PageUtil;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -125,9 +126,12 @@ public class ProductServiceImpl implements ProductService {
     public PageableResponse<ProductDto> getAllProducts(int pageNo, int pageSize, String sortBy, String sortDir) {
 
         //ternary operator for checking sortDir value
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        // Creating Pageable with sorting using utility method for reuse and cleaner code
+        Pageable pageRequest = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         //get products that are active and not soft deleted
         Page<Product> allProducts = productRepo.findAllActiveProducts(pageRequest);
@@ -151,9 +155,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageableResponse<ProductDto> getInactiveProducts(int pageNo, int pageSize, String sortBy, String sortDir) {
 
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageRequest = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         Page<Product> inactiveProducts = productRepo.findByIsActiveFalse(pageRequest);
 
@@ -188,9 +194,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageableResponse<ProductDto> getProductsBySearching(String keyword,int pageNo, int pageSize, String sortBy, String sortDir) {
 
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
 
-        Pageable pageRequest = PageRequest.of(pageNo, pageSize, sort);
+        Pageable pageRequest = PageUtil.getPageable(pageNo, pageSize, sortBy, sortDir);
 
         //get products that are active only and match the keyword in product names or description
         Page<Product> searchedProducts = productRepo.searchNotes(pageRequest,keyword);
@@ -215,9 +223,12 @@ public class ProductServiceImpl implements ProductService {
         //find category by id first
         Category category = categoryRepo.findById(Integer.parseInt(categoryId)).orElseThrow(() -> new ResourceNotFoundException("Invalid category id"));
 
-        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//        Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
+//
+//        Pageable pageRequest = PageRequest.of(pageNumber, pageSize, sort);
 
-        Pageable pageRequest = PageRequest.of(pageNumber, pageSize, sort);
+        // Creating Pageable with sorting using utility method for reuse and cleaner code
+        Pageable pageRequest = PageUtil.getPageable(pageNumber, pageSize, sortBy, sortDir);
 
         Page<Product> productsByCategory = productRepo.findByCategoryAndIsActiveTrue(category, pageRequest);
 

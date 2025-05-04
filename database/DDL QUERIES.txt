@@ -1,0 +1,144 @@
+-- BaseDates fields (createdOn, updatedOn) are inherited by child entities but not a standalone table.
+
+CREATE TABLE site_user (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    profile_image VARCHAR(255) NOT NULL,
+    mobile_number VARCHAR(255) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    city VARCHAR(255) NOT NULL,
+    state VARCHAR(255) NOT NULL,
+    zip_code VARCHAR(255) NOT NULL,
+    account_status_id INT UNIQUE NOT NULL, -- 1:1 with account_status
+    created_on DATETIME(6),
+    updated_on DATETIME(6),
+    FOREIGN KEY (account_status_id) REFERENCES account_status(id)
+);
+
+CREATE TABLE account_status (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    is_account_active BIT(1) NOT NULL,
+    verification_token VARCHAR(255) UNIQUE,
+    verification_token_expiry DATETIME(6),
+    password_reset_token VARCHAR(255) UNIQUE,
+    password_reset_token_expiry DATETIME(6)
+);
+
+CREATE TABLE role (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255)
+);
+
+-- Join table for M:N relationship between SiteUser and Role
+CREATE TABLE user_role (
+    user_id INT NOT NULL,
+    role_id INT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES site_user(id),
+    FOREIGN KEY (role_id) REFERENCES role(id)
+);
+
+CREATE TABLE review (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment VARCHAR(8000),
+    product_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_on DATETIME(6),
+    updated_on DATETIME(6),
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (user_id) REFERENCES site_user(id)
+);
+
+CREATE TABLE category (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    category_name VARCHAR(60) NOT NULL UNIQUE,
+    category_image VARCHAR(255),
+    description VARCHAR(8000),
+    is_active BIT(1) NOT NULL,
+    created_on DATETIME(6),
+    updated_on DATETIME(6)
+);
+
+CREATE TABLE products (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    product_name VARCHAR(250) NOT NULL,
+    short_description VARCHAR(160) NOT NULL,
+    description VARCHAR(8000) NOT NULL,
+    unit_price DOUBLE NOT NULL,
+    stock INT NOT NULL,
+    product_image VARCHAR(255),
+    discount_percent INT,
+    discounted_price DOUBLE,
+    is_active BIT(1) NOT NULL,
+    is_deleted BIT(1),
+    deleted_on DATETIME(6),
+    category_id INT NOT NULL,
+    created_on DATETIME(6),
+    updated_on DATETIME(6),
+    FOREIGN KEY (category_id) REFERENCES category(id)
+);
+
+CREATE TABLE cart (
+    cart_id INT PRIMARY KEY AUTO_INCREMENT,
+    total_cart_price DOUBLE,
+    user_id INT NOT NULL UNIQUE, -- 1:1 with site_user
+    created_on DATETIME(6),
+    updated_on DATETIME(6),
+    FOREIGN KEY (user_id) REFERENCES site_user(id)
+);
+
+CREATE TABLE cart_item (
+    cart_item_id INT PRIMARY KEY AUTO_INCREMENT,
+    quantity INT NOT NULL,
+    sub_total_price DOUBLE NOT NULL,
+    product_id INT NOT NULL,
+    cart_id INT NOT NULL,
+    created_on DATETIME(6),
+    updated_on DATETIME(6),
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (cart_id) REFERENCES cart(cart_id)
+);
+
+CREATE TABLE orders (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    order_identifier VARCHAR(255) NOT NULL UNIQUE,
+    total_order_amount DOUBLE NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    payment_method VARCHAR(255),
+    shipping_address VARCHAR(255) NOT NULL,
+    shipping_zip_code VARCHAR(6) NOT NULL,
+    shipping_province VARCHAR(255) NOT NULL,
+    shipping_phone_number VARCHAR(255) NOT NULL,
+    order_date DATETIME(6),
+    estimated_delivery_date DATETIME(6),
+    user_id INT NOT NULL,
+    created_on DATETIME(6),
+    updated_on DATETIME(6),
+    FOREIGN KEY (user_id) REFERENCES site_user(id)
+);
+
+CREATE TABLE order_item (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    quantity INT NOT NULL,
+    price_at_purchase DOUBLE NOT NULL,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+CREATE TABLE refund (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    reason VARCHAR(255),
+    status VARCHAR(255),
+    seller_comment VARCHAR(8000),
+    resolved_date DATETIME(6),
+    order_id INT NOT NULL UNIQUE, -- 1:1 with orders
+    created_on DATETIME(6),
+    updated_on DATETIME(6),
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
