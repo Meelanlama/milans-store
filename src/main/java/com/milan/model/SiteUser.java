@@ -53,7 +53,7 @@ public class SiteUser extends BaseDates{
     @Column(nullable = false)
     private String zipCode;
 
-    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role", //matches actual table name
             joinColumns = @JoinColumn(name = "user_id"),

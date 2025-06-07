@@ -129,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
             // Add to total order amount
             totalOrderAmount.set(totalOrderAmount.get() + orderItem.getPriceAtPurchase());
 
-            // 🔄 Update product stock
+            // Update product stock
             product.setStock(availableProductStock - orderProductQuantity);
             productRepository.save(product);
 

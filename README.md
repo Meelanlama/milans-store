@@ -1,7 +1,7 @@
 ### E-R Diagram for the application
 > **Note:** This E-R diagram shows the current structure of the application. It may change in the future accordingly to new features that will be added.
 
-![ER Diagram](./database/ERD%20Crows_Foot%20Notation.jpg)
+![ER Diagram](database/ERD.drawio.png)
 
 ### Current Features:
 So far, the application includes these features:
